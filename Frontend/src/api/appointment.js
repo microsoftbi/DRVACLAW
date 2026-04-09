@@ -26,3 +26,5 @@ export const appointmentApi = {
     return request.delete(`/api/appointments/${id}`)
   }
 }
+
+export default appointmentApi

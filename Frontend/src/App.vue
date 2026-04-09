@@ -12,6 +12,10 @@
           text-color="#fff"
           active-text-color="#ffd04b"
         >
+          <el-menu-item index="/appointments">
+            <el-icon><Calendar /></el-icon>
+            <span>预约管理</span>
+          </el-menu-item>
           <el-menu-item index="/areas">
             <el-icon><Location /></el-icon>
             <span>区域管理</span>
@@ -20,9 +24,9 @@
             <el-icon><User /></el-icon>
             <span>人员管理</span>
           </el-menu-item>
-          <el-menu-item index="/appointments">
-            <el-icon><Calendar /></el-icon>
-            <span>预约管理</span>
+          <el-menu-item index="/area-statistics">
+            <el-icon><DataAnalysis /></el-icon>
+            <span>区域统计</span>
           </el-menu-item>
         </el-menu>
       </el-aside>
@@ -36,7 +40,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { Location, User, Calendar } from '@element-plus/icons-vue'
+import { Location, User, Calendar, DataAnalysis } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const activeMenu = computed(() => route.path)

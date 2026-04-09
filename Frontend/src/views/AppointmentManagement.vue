@@ -1,7 +1,85 @@
 <template>
   <div class="appointment-management">
     <h2>预约管理</h2>
-    <el-button type="primary" @click="showAddDialog">添加预约</el-button>
+    
+    <div class="filter-container" style="margin-top: 20px; padding: 16px; background-color: #f5f7fa; border-radius: 4px;">
+      <el-row :gutter="20">
+        <el-col :span="6">
+          <el-form-item label="学员">
+            <el-select v-model="filters.student_id" placeholder="选择学员" clearable filterable>
+              <el-option label="全部" value="" />
+              <el-option v-for="student in students" :key="student.person_id" :label="student.name" :value="student.person_id" />
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col :span="6">
+          <el-form-item label="学员区域">
+            <el-select v-model="filters.student_area_id" placeholder="选择学员区域" clearable>
+              <el-option label="全部" value="" />
+              <el-option v-for="area in areas" :key="area.area_id" :label="area.name" :value="area.area_id" />
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col :span="6">
+          <el-form-item label="教练">
+            <el-select v-model="filters.coach_id" placeholder="选择教练" clearable filterable>
+              <el-option label="全部" value="" />
+              <el-option v-for="coach in coaches" :key="coach.person_id" :label="coach.name" :value="coach.person_id" />
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col :span="6">
+          <el-form-item label="教练区域">
+            <el-select v-model="filters.coach_area_id" placeholder="选择教练区域" clearable>
+              <el-option label="全部" value="" />
+              <el-option v-for="area in areas" :key="area.area_id" :label="area.name" :value="area.area_id" />
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col :span="6">
+          <el-form-item label="时间">
+            <el-date-picker
+              v-model="filters.date"
+              type="date"
+              placeholder="选择日期"
+              value-format="YYYY-MM-DD"
+              clearable
+            />
+          </el-form-item>
+        </el-col>
+        <el-col :span="6">
+          <el-form-item label="状态">
+            <el-select v-model="filters.status" placeholder="选择状态" clearable>
+              <el-option label="全部" value="" />
+              <el-option label="待确认" value="待确认" />
+              <el-option label="已确认" value="已确认" />
+              <el-option label="已取消" value="已取消" />
+              <el-option label="已完成" value="已完成" />
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col :span="6">
+          <el-form-item label="操作">
+            <el-button type="primary" @click="applyFilters">筛选</el-button>
+            <el-button @click="resetFilters">重置</el-button>
+          </el-form-item>
+        </el-col>
+      </el-row>
+    </div>
+    
+    <!-- 顶部分页和添加按钮 -->
+    <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
+      <el-button type="primary" @click="showAddDialog">添加预约</el-button>
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        layout="total, sizes, prev, pager, next, jumper"
+        :total="filteredAppointments.length"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+      />
+    </div>
     
     <table class="data-table" style="width: 100%; margin-top: 20px; border-collapse: collapse;">
       <thead>
@@ -14,12 +92,13 @@
           <th style="width: 120px; text-align: left; padding: 12px; border: 1px solid #ddd; background-color: #f5f7fa;">预约日期</th>
           <th style="width: 120px; text-align: left; padding: 12px; border: 1px solid #ddd; background-color: #f5f7fa;">预约时间</th>
           <th style="width: 100px; text-align: left; padding: 12px; border: 1px solid #ddd; background-color: #f5f7fa;">状态</th>
+          <th style="width: 120px; text-align: left; padding: 12px; border: 1px solid #ddd; background-color: #f5f7fa;">创建时间</th>
           <th style="width: 80px; text-align: left; padding: 12px; border: 1px solid #ddd; background-color: #f5f7fa;">明细</th>
           <th style="width: 250px; text-align: left; padding: 12px; border: 1px solid #ddd; background-color: #f5f7fa;">操作</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="appt in appointments" :key="appt.appointment_id">
+        <tr v-for="appt in paginatedAppointments" :key="appt.appointment_id">
           <td style="text-align: left; padding: 12px; border: 1px solid #ddd;">{{ appt.appointment_id }}</td>
           <td style="text-align: left; padding: 12px; border: 1px solid #ddd;">{{ getPersonName(appt.student_id) }}</td>
           <td style="text-align: left; padding: 12px; border: 1px solid #ddd;">{{ getPersonArea(appt.student_id) }}</td>
@@ -30,6 +109,7 @@
           <td style="text-align: left; padding: 12px; border: 1px solid #ddd;">
             <el-tag :type="getStatusType(appt.status)">{{ appt.status }}</el-tag>
           </td>
+          <td style="text-align: left; padding: 12px; border: 1px solid #ddd;">{{ appt.create_time }}</td>
           <td style="text-align: left; padding: 12px; border: 1px solid #ddd;">
             <el-button size="small" @click="showDetailDialog(appt)">明细</el-button>
           </td>
@@ -42,6 +122,19 @@
         </tr>
       </tbody>
     </table>
+    
+    <!-- 分页 -->
+    <div style="margin-top: 20px; text-align: right;">
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        layout="total, sizes, prev, pager, next, jumper"
+        :total="filteredAppointments.length"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+      />
+    </div>
 
     <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑预约' : '添加预约'" width="500px">
       <el-form :model="form" label-width="100px">
@@ -68,13 +161,14 @@
             <el-option v-for="i in 24" :key="i" :label="i + ':00'" :value="i" />
           </el-select>
         </el-form-item>
-        <el-form-item label="状态" v-if="isEdit">
-          <el-select v-model="form.status">
-            <el-option label="待确认" value="待确认" />
-            <el-option label="已确认" value="已确认" />
-            <el-option label="已取消" value="已取消" />
-          </el-select>
-        </el-form-item>
+        <el-form-item label="状态" prop="status">
+            <el-select v-model="form.status">
+              <el-option label="待确认" value="待确认" />
+              <el-option label="已确认" value="已确认" />
+              <el-option label="已取消" value="已取消" />
+              <el-option label="已完成" value="已完成" />
+            </el-select>
+          </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -92,6 +186,7 @@
           <p><strong>状态：</strong>
             <el-tag :type="getStatusType(currentAppointment.status)">{{ currentAppointment.status }}</el-tag>
           </p>
+          <p><strong>创建时间：</strong>{{ currentAppointment.create_time }}</p>
         </div>
         <div class="detail-section">
           <h3>学员信息</h3>
@@ -114,7 +209,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { appointmentApi } from '../api/appointment'
 import { personApi } from '../api/person'
@@ -131,10 +226,25 @@ const isEdit = ref(false)
 const currentId = ref(null)
 const currentAppointment = ref(null)
 const form = ref({ student_id: null, coach_id: null, appointment_date: '', start_time: 9, end_time: 11, status: '待确认' })
+const filters = ref({ student_id: null, student_area_id: null, coach_id: null, coach_area_id: null, date: null, status: null })
+
+// 分页
+const currentPage = ref(1)
+const pageSize = ref(20)
+const allAppointments = ref([])
+const filteredAppointments = ref([])
+
+// 分页数据
+const paginatedAppointments = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredAppointments.value.slice(start, end)
+})
 
 const loadAppointments = async () => {
   try {
-    appointments.value = await appointmentApi.getAll()
+    allAppointments.value = await appointmentApi.getAll()
+    filteredAppointments.value = [...allAppointments.value]
   } catch (error) {
     ElMessage.error('加载预约列表失败')
   }
@@ -242,6 +352,67 @@ const deleteAppointment = async (id) => {
   }
 }
 
+// 分页处理
+const handleSizeChange = (size) => {
+  pageSize.value = size
+  currentPage.value = 1 // 重置页码
+}
+
+const handleCurrentChange = (current) => {
+  currentPage.value = current
+}
+
+
+
+const applyFilters = () => {
+  // 实现筛选逻辑
+  let filtered = [...allAppointments.value]
+  
+  if (filters.value.student_id && filters.value.student_id !== '') {
+    filtered = filtered.filter(appt => appt.student_id === filters.value.student_id)
+  }
+  
+  if (filters.value.student_area_id && filters.value.student_area_id !== '') {
+    filtered = filtered.filter(appt => {
+      const student = persons.value.find(p => p.person_id === appt.student_id)
+      return student && student.area_id === filters.value.student_area_id
+    })
+  }
+  
+  if (filters.value.coach_id && filters.value.coach_id !== '') {
+    filtered = filtered.filter(appt => appt.coach_id === filters.value.coach_id)
+  }
+  
+  if (filters.value.coach_area_id && filters.value.coach_area_id !== '') {
+    filtered = filtered.filter(appt => {
+      const coach = persons.value.find(p => p.person_id === appt.coach_id)
+      return coach && coach.area_id === filters.value.coach_area_id
+    })
+  }
+  
+  if (filters.value.date) {
+    filtered = filtered.filter(appt => {
+      return appt.appointment_date === filters.value.date
+    })
+  }
+  
+  if (filters.value.status && filters.value.status !== '') {
+    filtered = filtered.filter(appt => appt.status === filters.value.status)
+  }
+  
+  // 这里需要将筛选后的结果应用到表格显示
+  filteredAppointments.value = filtered
+  currentPage.value = 1 // 重置页码
+}
+
+const resetFilters = () => {
+  // 重置筛选条件
+  filters.value = { student_id: null, student_area_id: null, coach_id: null, coach_area_id: null, date: null, status: null }
+  // 重新加载所有预约
+  loadAppointments()
+  currentPage.value = 1 // 重置页码
+}
+
 onMounted(() => {
   loadAppointments()
   loadPersons()
@@ -258,6 +429,19 @@ onMounted(() => {
 
 .data-table {
   width: 100%;
+}
+
+.data-table th,
+.data-table td {
+  padding: 8px 12px;
+  line-height: 1.4;
+  font-size: 14px;
+}
+
+.data-table td .el-button {
+  padding: 4px 12px;
+  font-size: 12px;
+  margin-right: 4px;
 }
 
 .detail-content {

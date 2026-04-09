@@ -17,3 +17,5 @@ export const areaApi = {
     return request.delete(`/api/areas/${id}`)
   }
 }
+
+export default areaApi

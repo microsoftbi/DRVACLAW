@@ -23,3 +23,5 @@ export const personApi = {
     return request.delete(`/api/persons/${id}`)
   }
 }
+
+export default personApi

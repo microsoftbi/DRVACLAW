@@ -22,6 +22,7 @@ class AppointmentUpdate(BaseModel):
 
 class Appointment(AppointmentBase):
     appointment_id: int
+    create_time: str
     
     class Config:
         from_attributes = True
