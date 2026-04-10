@@ -3,12 +3,16 @@ from typing import List
 from datetime import datetime
 from Backend.schemas.person import Person, PersonCreate, PersonUpdate
 from Backend.dao.person_dao import PersonDAO
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/persons", tags=["人员管理"])
 
 @router.post("", response_model=Person)
 def create_person(person: PersonCreate):
     try:
+        logger.info(f"Creating person with data: {person.dict()}")
         register_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         person_id = PersonDAO.create(
             person.name,
@@ -19,6 +23,7 @@ def create_person(person: PersonCreate):
         )
         return PersonDAO.get_by_id(person_id)
     except Exception as e:
+        logger.error(f"Error creating person: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("", response_model=List[Person])

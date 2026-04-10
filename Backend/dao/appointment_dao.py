@@ -28,7 +28,7 @@ class AppointmentDAO:
     def get_all() -> List[Dict]:
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute('SELECT * FROM appointment')
+        cursor.execute('SELECT * FROM appointment ORDER BY appointment_id DESC')
         rows = cursor.fetchall()
         conn.close()
         return [dict(row) for row in rows]

@@ -113,6 +113,15 @@ const showEditDialog = (row) => {
 
 const savePerson = async () => {
   try {
+    if (!form.value.name || !form.value.name.trim()) {
+      ElMessage.error('请输入姓名')
+      return
+    }
+    if (!form.value.phone || !form.value.phone.trim()) {
+      ElMessage.error('请输入手机号')
+      return
+    }
+    
     if (isEdit.value) {
       await personApi.update(currentId.value, form.value)
       ElMessage.success('更新成功')

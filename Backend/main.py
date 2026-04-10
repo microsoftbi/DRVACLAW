@@ -7,7 +7,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from Backend.routers import area, person, appointment
+from Backend.routers import area, person, appointment, recharge
 from Backend.db.init_db import init_db
 
 @asynccontextmanager
@@ -32,6 +32,7 @@ app.add_middleware(
 app.include_router(area.router)
 app.include_router(person.router)
 app.include_router(appointment.router)
+app.include_router(recharge.router)
 
 @app.get("/")
 def root():

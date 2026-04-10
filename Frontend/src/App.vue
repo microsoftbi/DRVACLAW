@@ -16,6 +16,14 @@
             <el-icon><Calendar /></el-icon>
             <span>预约管理</span>
           </el-menu-item>
+          <el-menu-item index="/recharges">
+            <el-icon><Money /></el-icon>
+            <span>充值管理</span>
+          </el-menu-item>
+          <el-menu-item index="/balance-query">
+            <el-icon><DataAnalysis /></el-icon>
+            <span>余额查询</span>
+          </el-menu-item>
           <el-menu-item index="/areas">
             <el-icon><Location /></el-icon>
             <span>区域管理</span>
@@ -40,7 +48,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { Location, User, Calendar, DataAnalysis } from '@element-plus/icons-vue'
+import { Location, User, Calendar, DataAnalysis, Money } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const activeMenu = computed(() => route.path)

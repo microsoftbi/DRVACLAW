@@ -41,6 +41,17 @@ def init_db():
         )
     ''')
     
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS recharge (
+            recharge_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            student_id INTEGER NOT NULL,
+            amount REAL NOT NULL CHECK(amount > 0),
+            course_count INTEGER NOT NULL CHECK(course_count > 0),
+            recharge_time TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (student_id) REFERENCES person(person_id)
+        )
+    ''')
+    
     conn.commit()
     conn.close()
 
@@ -112,6 +123,26 @@ def insert_test_data():
         appointments.append((student_id, coach_id, appointment_date, start_time, end_time, status, create_time))
     
     cursor.executemany('INSERT OR IGNORE INTO appointment (student_id, coach_id, appointment_date, start_time, end_time, status, create_time) VALUES (?, ?, ?, ?, ?, ?, ?)', appointments)
+    
+    # 插入充值数据
+    recharges = []
+    
+    # 为每个学员生成2-3条充值记录
+    for student_id in range(1, 21):
+        # 生成2-3条充值记录
+        for i in range(1, 4):
+            # 随机生成充值金额（1000-5000）
+            amount = 1000 + (i * 1000)
+            # 随机生成课程数量（5-20）
+            course_count = 5 + (i * 3)
+            # 生成充值时间（2026年1月到3月）
+            month = i
+            day = (student_id % 28) + 1
+            recharge_time = f'2026-{str(month).zfill(2)}-{str(day).zfill(2)}'
+            
+            recharges.append((student_id, amount, course_count, recharge_time))
+    
+    cursor.executemany('INSERT OR IGNORE INTO recharge (student_id, amount, course_count, recharge_time) VALUES (?, ?, ?, ?)', recharges)
     
     conn.commit()
     conn.close()
