@@ -6,7 +6,7 @@
     <div style="margin-bottom: 20px;">
       <el-select v-model="selectedStudentId" placeholder="请选择学员" style="width: 300px;" filterable>
         <el-option
-          v-for="student in students"
+          v-for="student in students.filter(s => s.type === '学员')"
           :key="student.person_id"
           :label="`${student.name} - ${getAreaName(student.area_id)} - ${student.phone}`"
           :value="student.person_id"
@@ -22,62 +22,130 @@
           <th>区域</th>
           <th>日期</th>
           <th>课时</th>
+          <th>结余</th>
           <th>类型</th>
+          <th>充值详细信息</th>
+          <th>课程预约详细信息</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(record, index) in sortedRecords" :key="index">
+        <tr v-for="(record, index) in filteredRecords" :key="index">
           <td>{{ record.studentName }}</td>
           <td>{{ record.areaName }}</td>
           <td>{{ record.date }}</td>
           <td>{{ record.hours }}</td>
+          <td>{{ record.balance }}</td>
           <td>{{ record.type }}</td>
+          <td>
+            <el-button 
+              v-if="record.rechargeId" 
+              type="primary" 
+              size="small" 
+              @click="openRechargeDialog(record.rechargeId)"
+            >
+              查看
+            </el-button>
+            <span v-else>-</span>
+          </td>
+          <td>
+            <el-button 
+              v-if="record.appointmentId" 
+              type="primary" 
+              size="small" 
+              @click="openAppointmentDialog(record.appointmentId)"
+            >
+              查看
+            </el-button>
+            <span v-else>-</span>
+          </td>
         </tr>
       </tbody>
     </table>
+    
+    <!-- 充值详情弹窗 -->
+    <el-dialog
+      v-model="rechargeDialogVisible"
+      title="充值详细信息"
+      width="500px"
+    >
+      <div v-if="rechargeDetail">
+        <el-descriptions :column="1" border>
+          <el-descriptions-item label="充值ID">{{ rechargeDetail.recharge_id }}</el-descriptions-item>
+          <el-descriptions-item label="学员ID">{{ rechargeDetail.student_id }}</el-descriptions-item>
+          <el-descriptions-item label="学员姓名">{{ getStudentName(rechargeDetail.student_id) }}</el-descriptions-item>
+          <el-descriptions-item label="充值金额">{{ rechargeDetail.amount }} 元</el-descriptions-item>
+          <el-descriptions-item label="课程数量">{{ rechargeDetail.course_count }} 课时</el-descriptions-item>
+          <el-descriptions-item label="充值时间">{{ rechargeDetail.recharge_time }}</el-descriptions-item>
+        </el-descriptions>
+      </div>
+      <div v-else>
+        <el-empty description="加载中..." />
+      </div>
+    </el-dialog>
+    
+    <!-- 预约详情弹窗 -->
+    <el-dialog
+      v-model="appointmentDialogVisible"
+      title="课程预约详细信息"
+      width="500px"
+    >
+      <div v-if="appointmentDetail">
+        <el-descriptions :column="1" border>
+          <el-descriptions-item label="预约ID">{{ appointmentDetail.appointment_id }}</el-descriptions-item>
+          <el-descriptions-item label="学员ID">{{ appointmentDetail.student_id }}</el-descriptions-item>
+          <el-descriptions-item label="学员姓名">{{ getStudentName(appointmentDetail.student_id) }}</el-descriptions-item>
+          <el-descriptions-item label="教练ID">{{ appointmentDetail.coach_id }}</el-descriptions-item>
+          <el-descriptions-item label="教练姓名">{{ getCoachName(appointmentDetail.coach_id) }}</el-descriptions-item>
+          <el-descriptions-item label="预约日期">{{ appointmentDetail.appointment_date }}</el-descriptions-item>
+          <el-descriptions-item label="开始时间">{{ appointmentDetail.start_time }}:00</el-descriptions-item>
+          <el-descriptions-item label="结束时间">{{ appointmentDetail.end_time }}:00</el-descriptions-item>
+          <el-descriptions-item label="状态">{{ appointmentDetail.status }}</el-descriptions-item>
+          <el-descriptions-item label="创建时间">{{ appointmentDetail.create_time }}</el-descriptions-item>
+        </el-descriptions>
+      </div>
+      <div v-else>
+        <el-empty description="加载中..." />
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import appointmentApi from '../api/appointment'
-import rechargeApi from '../api/recharge'
+import balanceApi from '../api/balance'
 import personApi from '../api/person'
 import areaApi from '../api/area'
+import rechargeApi from '../api/recharge'
+import appointmentApi from '../api/appointment'
 
-const appointments = ref([])
-const recharges = ref([])
+const records = ref([])
 const students = ref([])
 const areas = ref([])
 const selectedStudentId = ref('')
 
-const loadAppointments = async () => {
-  try {
-    const response = await appointmentApi.getAll()
-    appointments.value = (response || []).filter(appointment => appointment.status === '已完成')
-  } catch (error) {
-    ElMessage.error('获取预约记录失败')
-    appointments.value = []
-  }
-}
+// 弹窗相关
+const rechargeDialogVisible = ref(false)
+const appointmentDialogVisible = ref(false)
+const rechargeDetail = ref(null)
+const appointmentDetail = ref(null)
 
-const loadRecharges = async () => {
+const loadRecords = async () => {
   try {
-    const response = await rechargeApi.getAll()
-    recharges.value = response || []
+    const response = await balanceApi.getAll()
+    records.value = response || []
   } catch (error) {
-    ElMessage.error('获取充值记录失败')
-    recharges.value = []
+    ElMessage.error('获取余额记录失败')
+    records.value = []
   }
 }
 
 const loadStudents = async () => {
   try {
     const response = await personApi.getAll()
-    students.value = (response || []).filter(person => person.type === '学员')
+    students.value = response || [] // 包含所有人员（学员和教练）
   } catch (error) {
-    ElMessage.error('获取学员列表失败')
+    ElMessage.error('获取人员列表失败')
     students.value = []
   }
 }
@@ -94,7 +162,7 @@ const loadAreas = async () => {
 
 const getStudentName = (studentId) => {
   if (!students.value) return '未知学员'
-  const student = students.value.find(s => s.person_id === studentId)
+  const student = students.value.find(s => s.person_id === studentId && s.type === '学员')
   return student ? student.name : '未知学员'
 }
 
@@ -104,72 +172,58 @@ const getAreaName = (areaId) => {
   return area ? area.name : '未知区域'
 }
 
-const calculateHours = (startTime, endTime) => {
-  if (!startTime || !endTime) return 0
-  // 检查startTime和endTime是否为数字类型
-  if (typeof startTime === 'number' && typeof endTime === 'number') {
-    // 如果是数字类型，直接计算差值
-    const diff = endTime - startTime
-    return diff.toFixed(1)
-  } else {
-    // 如果是字符串类型，使用Date对象计算
-    const start = new Date(startTime)
-    const end = new Date(endTime)
-    const diff = (end - start) / (1000 * 60 * 60) // 转换为小时
-    return diff.toFixed(1)
+const getCoachName = (coachId) => {
+  if (!students.value) return '未知教练'
+  const coach = students.value.find(s => s.person_id === coachId && s.type === '教练')
+  return coach ? coach.name : '未知教练'
+}
+
+const openRechargeDialog = async (rechargeId) => {
+  try {
+    const response = await rechargeApi.getById(rechargeId)
+    rechargeDetail.value = response
+    rechargeDialogVisible.value = true
+  } catch (error) {
+    ElMessage.error('获取充值详情失败')
   }
 }
 
-const records = computed(() => {
-  // 处理预约记录
-  let appointmentRecords = appointments.value.map(appointment => {
-    const student = students.value.find(s => s.person_id === appointment.student_id)
-    const areaId = student ? student.area_id : null
+const openAppointmentDialog = async (appointmentId) => {
+  try {
+    const response = await appointmentApi.getById(appointmentId)
+    appointmentDetail.value = response
+    appointmentDialogVisible.value = true
+  } catch (error) {
+    ElMessage.error('获取预约详情失败')
+  }
+}
+
+const filteredRecords = computed(() => {
+  // 处理余额记录
+  let processedRecords = records.value.map(record => {
     return {
-      studentId: appointment.student_id,
-      studentName: getStudentName(appointment.student_id),
-      areaName: getAreaName(areaId),
-      date: appointment.appointment_date,
-      hours: calculateHours(appointment.start_time, appointment.end_time),
-      type: '预约',
-      time: appointment.appointment_date + ' ' + appointment.start_time
+      studentId: record.student_id,
+      studentName: getStudentName(record.student_id),
+      areaName: getAreaName(record.area_id),
+      date: record.record_date,
+      hours: record.hours,
+      balance: record.balance,
+      type: record.type,
+      rechargeId: record.recharge_id,
+      appointmentId: record.appointment_id
     }
   })
-
-  // 处理充值记录
-  let rechargeRecords = recharges.value.map(recharge => {
-    const student = students.value.find(s => s.person_id === recharge.student_id)
-    const areaId = student ? student.area_id : null
-    return {
-      studentId: recharge.student_id,
-      studentName: getStudentName(recharge.student_id),
-      areaName: getAreaName(areaId),
-      date: recharge.recharge_time,
-      hours: recharge.course_count,
-      type: '充值',
-      time: recharge.recharge_time
-    }
-  })
-
-  // 合并记录
-  let allRecords = [...appointmentRecords, ...rechargeRecords]
 
   // 根据选中的学员筛选
   if (selectedStudentId.value) {
-    allRecords = allRecords.filter(record => record.studentId === selectedStudentId.value)
+    processedRecords = processedRecords.filter(record => record.studentId === selectedStudentId.value)
   }
 
-  return allRecords
-})
-
-const sortedRecords = computed(() => {
-  // 按照时间排序，最新的在前面
-  return [...records.value].sort((a, b) => new Date(b.time) - new Date(a.time))
+  return processedRecords
 })
 
 onMounted(() => {
-  loadAppointments()
-  loadRecharges()
+  loadRecords()
   loadStudents()
   loadAreas()
 })

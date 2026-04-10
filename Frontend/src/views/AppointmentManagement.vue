@@ -319,7 +319,8 @@ const saveAppointment = async () => {
       ElMessage.success('添加成功')
     }
     dialogVisible.value = false
-    loadAppointments()
+    await loadAppointments()
+    applyFilters()
   } catch (error) {
     ElMessage.error('操作失败')
   }
@@ -329,7 +330,8 @@ const updateStatus = async (row, status) => {
   try {
     await appointmentApi.update(row.appointment_id, { status })
     ElMessage.success('状态更新成功')
-    loadAppointments()
+    await loadAppointments()
+    applyFilters()
   } catch (error) {
     ElMessage.error('状态更新失败')
   }
@@ -344,7 +346,8 @@ const deleteAppointment = async (id) => {
     })
     await appointmentApi.delete(id)
     ElMessage.success('删除成功')
-    loadAppointments()
+    await loadAppointments()
+    applyFilters()
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error('删除失败')

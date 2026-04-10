@@ -52,6 +52,24 @@ def init_db():
         )
     ''')
     
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS balance_record (
+            record_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            student_id INTEGER NOT NULL,
+            area_id INTEGER,
+            record_date TEXT NOT NULL,
+            hours REAL NOT NULL,
+            balance REAL NOT NULL DEFAULT 0,
+            type TEXT NOT NULL CHECK(type IN ('充值', '课时消耗')),
+            recharge_id INTEGER,
+            appointment_id INTEGER,
+            FOREIGN KEY (student_id) REFERENCES person(person_id),
+            FOREIGN KEY (area_id) REFERENCES area(area_id),
+            FOREIGN KEY (recharge_id) REFERENCES recharge(recharge_id),
+            FOREIGN KEY (appointment_id) REFERENCES appointment(appointment_id)
+        )
+    ''')
+    
     conn.commit()
     conn.close()
 
@@ -80,16 +98,16 @@ def insert_test_data():
     # 插入人员数据
     persons = []
     
-    # 添加20个学员
-    for i in range(1, 21):
+    # 添加10个学员
+    for i in range(1, 11):
         name = f'学员{i}'
         phone = f'13800138{str(i).zfill(3)}'
         register_time = f'2026-01-{str(i).zfill(2)}'
         area_id = (i % 12) + 1  # 分配到不同的区域
         persons.append((name, phone, register_time, area_id, '学员'))
     
-    # 添加10个教练
-    for i in range(1, 11):
+    # 添加5个教练
+    for i in range(1, 6):
         name = f'教练{i}'
         phone = f'13900139{str(i).zfill(3)}'
         register_time = f'2026-01-{str(i).zfill(2)}'
@@ -102,12 +120,12 @@ def insert_test_data():
     appointments = []
     statuses = ['待确认', '已确认', '已完成', '已取消']
     
-    # 生成1000条预约数据，日期分布在2026年1月到5月
-    for i in range(1, 1001):
-        # 随机选择学员（1-20）
-        student_id = (i % 20) + 1
-        # 随机选择教练（21-30）
-        coach_id = (i % 10) + 21
+    # 生成30条预约数据，日期分布在2026年1月到5月
+    for i in range(1, 31):
+        # 随机选择学员（1-10）
+        student_id = (i % 10) + 1
+        # 随机选择教练（11-15）
+        coach_id = (i % 5) + 11
         # 随机生成日期：2026年1月到5月
         month = (i % 5) + 1  # 1-5月
         day = (i % 28) + 1   # 1-28日
@@ -124,25 +142,43 @@ def insert_test_data():
     
     cursor.executemany('INSERT OR IGNORE INTO appointment (student_id, coach_id, appointment_date, start_time, end_time, status, create_time) VALUES (?, ?, ?, ?, ?, ?, ?)', appointments)
     
-    # 插入充值数据
-    recharges = []
-    
-    # 为每个学员生成2-3条充值记录
-    for student_id in range(1, 21):
-        # 生成2-3条充值记录
-        for i in range(1, 4):
-            # 随机生成充值金额（1000-5000）
-            amount = 1000 + (i * 1000)
-            # 随机生成课程数量（5-20）
-            course_count = 5 + (i * 3)
-            # 生成充值时间（2026年1月到3月）
-            month = i
-            day = (student_id % 28) + 1
-            recharge_time = f'2026-{str(month).zfill(2)}-{str(day).zfill(2)}'
-            
-            recharges.append((student_id, amount, course_count, recharge_time))
-    
-    cursor.executemany('INSERT OR IGNORE INTO recharge (student_id, amount, course_count, recharge_time) VALUES (?, ?, ?, ?)', recharges)
+    # 暂时不生成充值表和余额表的测试数据
+    # # 插入充值数据
+    # recharges = []
+    # 
+    # # 为每个学员生成2-3条充值记录
+    # for student_id in range(1, 11):
+    #     # 生成2-3条充值记录
+    #     for i in range(1, 4):
+    #         # 随机生成充值金额（1000-5000）
+    #         amount = 1000 + (i * 1000)
+    #         # 随机生成课程数量（5-20）
+    #         course_count = 5 + (i * 3)
+    #         # 生成充值时间（2026年1月到3月）
+    #         month = i
+    #         day = (student_id % 28) + 1
+    #         recharge_time = f'2026-{str(month).zfill(2)}-{str(day).zfill(2)}'
+    #         
+    #         recharges.append((student_id, amount, course_count, recharge_time))
+    # 
+    # cursor.executemany('INSERT OR IGNORE INTO recharge (student_id, amount, course_count, recharge_time) VALUES (?, ?, ?, ?)', recharges)
+    # 
+    # # 将充值记录同步到余额记录表
+    # cursor.execute('''
+    #     INSERT INTO balance_record (student_id, area_id, record_date, hours, type, recharge_id, appointment_id)
+    #     SELECT r.student_id, p.area_id, SUBSTR(r.recharge_time, 1, 10), r.course_count, '充值', r.recharge_id, NULL
+    #     FROM recharge r
+    #     JOIN person p ON r.student_id = p.person_id
+    # ''')
+    # 
+    # # 将已完成的预约记录同步到余额记录表
+    # cursor.execute('''
+    #     INSERT INTO balance_record (student_id, area_id, record_date, hours, type, recharge_id, appointment_id)
+    #     SELECT a.student_id, p.area_id, a.appointment_date, (a.end_time - a.start_time), '课时消耗', NULL, a.appointment_id
+    #     FROM appointment a
+    #     JOIN person p ON a.student_id = p.person_id
+    #     WHERE a.status = '已完成'
+    # ''')
     
     conn.commit()
     conn.close()
