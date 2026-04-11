@@ -106,12 +106,12 @@ const loadAreas = async () => {
 
 // 初始化地图
 const initMap = () => {
-  // 使用实际的郑州地图
+  // 使用本地的郑州地图数据
   const mapDom = document.getElementById('areaMap')
   mapChart.value = echarts.init(mapDom)
   
-  // 加载郑州地图数据
-  fetch('https://geo.datav.aliyun.com/areas_v3/bound/410100_full.json')
+  // 加载本地郑州地图数据
+  fetch('/maps/zhengzhou.json')
     .then(response => response.json())
     .then(geoJson => {
       // 注册地图
@@ -161,51 +161,11 @@ const initMap = () => {
     })
     .catch(error => {
       console.error('加载地图数据失败:', error)
-      // 如果地图数据加载失败，使用模拟数据
-      const option = {
-        tooltip: {
-          trigger: 'item',
-          formatter: '{b}'
-        },
-        series: [
-          {
-            type: 'map',
-            map: 'china',
-            roam: true,
-            center: [113.6, 34.7],
-            zoom: 8,
-            data: areas.value.map(area => ({
-              name: area.name,
-              value: area.area_id
-            })),
-            itemStyle: {
-              emphasis: {
-                label: {
-                  show: true
-                },
-                itemStyle: {
-                  areaColor: '#409eff'
-                }
-              }
-            },
-            label: {
-              show: true,
-              fontSize: 12
-            }
-          }
-        ]
+      // 如果地图数据加载失败，显示错误信息
+      const mapDom = document.getElementById('areaMap')
+      if (mapDom) {
+        mapDom.innerHTML = '<div style="text-align: center; padding: 50px; color: #999;">地图加载失败</div>'
       }
-      
-      mapChart.value.setOption(option)
-      
-      // 点击区域事件
-      mapChart.value.on('click', params => {
-        const area = areas.value.find(a => a.name === params.name)
-        if (area) {
-          selectedArea.value = area
-          loadAreaStats(area.area_id, dateRange.value[0], dateRange.value[1])
-        }
-      })
     })
 }
 
