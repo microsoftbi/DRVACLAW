@@ -204,9 +204,19 @@ const saveRecharge = async () => {
       return
     }
     
+    // 处理时间为北京时间
+    const date = new Date(form.value.recharge_time);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    const rechargeTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    
     const rechargeData = {
       ...form.value,
-      recharge_time: form.value.recharge_time.toISOString().slice(0, 19).replace('T', ' ')
+      recharge_time: rechargeTime
     }
     
     if (isEdit.value) {
