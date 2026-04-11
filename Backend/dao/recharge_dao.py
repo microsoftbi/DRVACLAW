@@ -1,6 +1,7 @@
 import sqlite3
 from typing import List, Dict
 from Backend.db.connection import get_connection
+from Backend.dao.audit_log_dao import AuditLogDAO
 
 class RechargeDAO:
     @staticmethod
@@ -38,6 +39,16 @@ class RechargeDAO:
             
             # 提交事务
             conn.commit()
+            
+            # 添加操作审计记录
+            AuditLogDAO.create(
+                operator="系统",
+                operation_type="充值",
+                operation_result=f"充值成功，充值记录ID为{recharge_id}",
+                student_id=student_id,
+                coach_id=None  # 充值操作不需要教练ID
+            )
+            
             return recharge_id
         except Exception as e:
             # 回滚事务
@@ -116,6 +127,17 @@ class RechargeDAO:
             
             # 提交事务
             conn.commit()
+            
+            # 添加操作审计记录
+            if affected_rows > 0:
+                AuditLogDAO.create(
+                    operator="系统",
+                    operation_type="修改充值",
+                    operation_result=f"修改充值成功，充值记录ID为{recharge_id}",
+                    student_id=student_id,
+                    coach_id=None  # 充值操作不需要教练ID
+                )
+            
             return affected_rows > 0
         except Exception as e:
             # 回滚事务
@@ -158,6 +180,17 @@ class RechargeDAO:
             
             # 提交事务
             conn.commit()
+            
+            # 添加操作审计记录
+            if affected_rows > 0 and student_id:
+                AuditLogDAO.create(
+                    operator="系统",
+                    operation_type="删除充值",
+                    operation_result=f"删除充值成功，充值记录ID为{recharge_id}",
+                    student_id=student_id,
+                    coach_id=None  # 充值操作不需要教练ID
+                )
+            
             return affected_rows > 0
         except Exception as e:
             # 回滚事务

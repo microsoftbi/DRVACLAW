@@ -5,6 +5,7 @@ import AppointmentManagement from '../views/AppointmentManagement.vue'
 import AreaStatistics from '../views/AreaStatistics.vue'
 import RechargeManagement from '../views/RechargeManagement.vue'
 import BalanceQuery from '../views/BalanceQuery.vue'
+import AuditLog from '../views/AuditLog.vue'
 
 const routes = [
   { path: '/', redirect: '/appointments' },
@@ -13,7 +14,8 @@ const routes = [
   { path: '/balance-query', component: BalanceQuery },
   { path: '/areas', component: AreaManagement },
   { path: '/persons', component: PersonManagement },
-  { path: '/area-statistics', component: AreaStatistics }
+  { path: '/area-statistics', component: AreaStatistics },
+  { path: '/audit-logs', component: AuditLog }
 ]
 
 const router = createRouter({

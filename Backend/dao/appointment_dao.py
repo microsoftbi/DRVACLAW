@@ -1,5 +1,6 @@
 from typing import List, Optional, Dict
 from Backend.db.connection import get_connection
+from Backend.dao.audit_log_dao import AuditLogDAO
 
 class AppointmentDAO:
     @staticmethod
@@ -13,6 +14,16 @@ class AppointmentDAO:
         conn.commit()
         appointment_id = cursor.lastrowid
         conn.close()
+        
+        # 添加操作审计记录
+        AuditLogDAO.create(
+            operator="系统",
+            operation_type="创建预约课程",
+            operation_result=f"课程创建成功，课程预约ID为{appointment_id}",
+            student_id=student_id,
+            coach_id=coach_id
+        )
+        
         return appointment_id
     
     @staticmethod
@@ -148,6 +159,35 @@ class AppointmentDAO:
             
             # 提交事务
             conn.commit()
+            
+            # 添加操作审计记录
+            if updated:
+                # 获取预约信息
+                appointment_info = AppointmentDAO.get_by_id(appointment_id)
+                if appointment_info:
+                    operation_type = "修改预约课程"
+                    operation_result = "修改预约课程成功"
+                    
+                    if status == "已确认" and old_status != "已确认":
+                        operation_type = "确认预约课程"
+                        operation_result = f"确认预约课程成功，课程预约ID为{appointment_id}"
+                    elif status == "已取消" and old_status != "已取消":
+                        operation_type = "取消预约课程"
+                        operation_result = f"取消预约课程成功，课程预约ID为{appointment_id}"
+                    elif status == "已完成" and old_status != "已完成":
+                        operation_type = "标记预约课程为已完成"
+                        operation_result = f"标记预约课程为已完成，课程预约ID为{appointment_id}"
+                    else:
+                        operation_result = f"修改预约课程成功，课程预约ID为{appointment_id}"
+                    
+                    AuditLogDAO.create(
+                        operator="系统",
+                        operation_type=operation_type,
+                        operation_result=operation_result,
+                        student_id=appointment_info['student_id'],
+                        coach_id=appointment_info['coach_id']
+                    )
+            
             return updated
         except Exception as e:
             # 回滚事务
@@ -190,6 +230,20 @@ class AppointmentDAO:
             
             # 提交事务
             conn.commit()
+            
+            # 添加操作审计记录
+            if deleted and student_id:
+                # 获取被删除的预约信息
+                # 由于已经删除，无法通过get_by_id获取，所以使用student_id
+                # 这里简化处理，只记录学生ID和操作类型
+                AuditLogDAO.create(
+                    operator="系统",
+                    operation_type="删除预约课程",
+                    operation_result=f"删除预约课程成功，课程预约ID为{appointment_id}",
+                    student_id=student_id,
+                    coach_id=None  # 无法获取教练ID，设为None
+                )
+            
             return deleted
         except Exception as e:
             # 回滚事务

@@ -8,7 +8,7 @@
           <el-form-item label="学员">
             <el-select v-model="filters.student_id" placeholder="选择学员" clearable filterable>
               <el-option label="全部" value="" />
-              <el-option v-for="student in students" :key="student.person_id" :label="student.name" :value="student.person_id" />
+              <el-option v-for="student in students" :key="student.person_id" :label="`${student.name} ${student.phone}`" :value="student.person_id" />
             </el-select>
           </el-form-item>
         </el-col>
@@ -100,7 +100,7 @@
       <tbody>
         <tr v-for="appt in paginatedAppointments" :key="appt.appointment_id">
           <td style="text-align: left; padding: 12px; border: 1px solid #ddd;">{{ appt.appointment_id }}</td>
-          <td style="text-align: left; padding: 12px; border: 1px solid #ddd;">{{ getPersonName(appt.student_id) }}</td>
+          <td style="text-align: left; padding: 12px; border: 1px solid #ddd;">{{ getPersonName(appt.student_id) }} {{ getPersonPhone(appt.student_id) }}</td>
           <td style="text-align: left; padding: 12px; border: 1px solid #ddd;">{{ getPersonArea(appt.student_id) }}</td>
           <td style="text-align: left; padding: 12px; border: 1px solid #ddd;">{{ getPersonName(appt.coach_id) }}</td>
           <td style="text-align: left; padding: 12px; border: 1px solid #ddd;">{{ getPersonArea(appt.coach_id) }}</td>
@@ -140,7 +140,7 @@
       <el-form :model="form" label-width="100px">
         <el-form-item label="学员">
           <el-select v-model="form.student_id">
-            <el-option v-for="student in students" :key="student.person_id" :label="student.name" :value="student.person_id" />
+            <el-option v-for="student in students" :key="student.person_id" :label="`${student.name} ${student.phone}`" :value="student.person_id" />
           </el-select>
         </el-form-item>
         <el-form-item label="教练">

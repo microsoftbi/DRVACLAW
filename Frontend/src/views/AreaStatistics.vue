@@ -1,6 +1,38 @@
 <template>
   <div class="area-statistics-container">
     <h2>区域统计</h2>
+    <div class="filter-container" style="margin-bottom: 20px; padding: 16px; background-color: #f5f7fa; border-radius: 4px;">
+      <el-row :gutter="10">
+        <el-col :span="8">
+          <el-form-item label="开始日期">
+            <el-date-picker
+              v-model="dateRange[0]"
+              type="date"
+              placeholder="选择开始日期"
+              value-format="YYYY-MM-DD"
+              clearable
+            />
+          </el-form-item>
+        </el-col>
+        <el-col :span="8">
+          <el-form-item label="结束日期">
+            <el-date-picker
+              v-model="dateRange[1]"
+              type="date"
+              placeholder="选择结束日期"
+              value-format="YYYY-MM-DD"
+              clearable
+            />
+          </el-form-item>
+        </el-col>
+        <el-col :span="8">
+          <div style="display: flex; gap: 10px; margin-top: 24px;">
+            <el-button type="primary" @click="applyDateFilter">应用筛选</el-button>
+            <el-button @click="resetDateFilter">重置</el-button>
+          </div>
+        </el-col>
+      </el-row>
+    </div>
     <div class="dashboard">
       <div class="map-section">
         <h3>郑州各区地图</h3>
@@ -24,6 +56,10 @@
                 <div class="stat-label">预约课程数</div>
                 <div class="stat-value">{{ selectedAreaStats.appointmentCount }}</div>
               </div>
+              <div class="stat-item">
+                <div class="stat-label">充值总计</div>
+                <div class="stat-value">{{ selectedAreaStats.rechargeTotal }}</div>
+              </div>
             </div>
             <div class="chart-container">
               <h5>预约状态分布</h5>
@@ -42,13 +78,16 @@ import * as echarts from 'echarts'
 import { areaApi } from '../api/area'
 import { personApi } from '../api/person'
 import { appointmentApi } from '../api/appointment'
+import rechargeApi from '../api/recharge'
 
 const areas = ref([])
 const selectedArea = ref(null)
+const dateRange = ref([null, null])
 const selectedAreaStats = ref({
   studentCount: 0,
   coachCount: 0,
   appointmentCount: 0,
+  rechargeTotal: 0,
   statusCounts: {}
 })
 
@@ -116,7 +155,7 @@ const initMap = () => {
         const area = areas.value.find(a => a.name === params.name)
         if (area) {
           selectedArea.value = area
-          loadAreaStats(area.area_id)
+          loadAreaStats(area.area_id, dateRange.value[0], dateRange.value[1])
         }
       })
     })
@@ -164,37 +203,72 @@ const initMap = () => {
         const area = areas.value.find(a => a.name === params.name)
         if (area) {
           selectedArea.value = area
-          loadAreaStats(area.area_id)
+          loadAreaStats(area.area_id, dateRange.value[0], dateRange.value[1])
         }
       })
     })
 }
 
 // 加载区域统计数据
-const loadAreaStats = async (areaId = null) => {
+const loadAreaStats = async (areaId = null, startDate = null, endDate = null) => {
   try {
     // 加载人员数据
     const persons = await personApi.getAll()
     // 加载预约数据
     const appointments = await appointmentApi.getAll()
+    // 加载充值数据
+    const recharges = await rechargeApi.getAll()
+    
+    // 日期筛选函数
+    const isDateInRange = (dateStr, start, end) => {
+      if (!start && !end) return true
+      const date = new Date(dateStr)
+      const startDateObj = start ? new Date(start) : null
+      const endDateObj = end ? new Date(end) : null
+      
+      if (startDateObj && endDateObj) {
+        return date >= startDateObj && date <= endDateObj
+      } else if (startDateObj) {
+        return date >= startDateObj
+      } else if (endDateObj) {
+        return date <= endDateObj
+      }
+      return true
+    }
     
     // 统计学员人数
     const studentCount = areaId 
-      ? persons.filter(p => p.type === '学员' && p.area_id === areaId).length
-      : persons.filter(p => p.type === '学员').length
+      ? persons.filter(p => p.type === '学员' && p.area_id === areaId && isDateInRange(p.register_time, startDate, endDate)).length
+      : persons.filter(p => p.type === '学员' && isDateInRange(p.register_time, startDate, endDate)).length
     
     // 统计教练人数
     const coachCount = areaId 
-      ? persons.filter(p => p.type === '教练' && p.area_id === areaId).length
-      : persons.filter(p => p.type === '教练').length
+      ? persons.filter(p => p.type === '教练' && p.area_id === areaId && isDateInRange(p.register_time, startDate, endDate)).length
+      : persons.filter(p => p.type === '教练' && isDateInRange(p.register_time, startDate, endDate)).length
     
     // 统计预约课程数
     const appointmentCount = areaId 
       ? appointments.filter(a => {
           const student = persons.find(p => p.person_id === a.student_id)
-          return student && student.area_id === areaId
+          return student && student.area_id === areaId && isDateInRange(a.appointment_date, startDate, endDate)
         }).length
-      : appointments.length
+      : appointments.filter(a => isDateInRange(a.appointment_date, startDate, endDate)).length
+    
+    // 统计充值总计
+    const rechargeTotal = areaId 
+      ? recharges.reduce((total, recharge) => {
+          const student = persons.find(p => p.person_id === recharge.student_id)
+          if (student && student.area_id === areaId && isDateInRange(recharge.recharge_time, startDate, endDate)) {
+            return total + recharge.amount
+          }
+          return total
+        }, 0)
+      : recharges.reduce((total, recharge) => {
+          if (isDateInRange(recharge.recharge_time, startDate, endDate)) {
+            return total + recharge.amount
+          }
+          return total
+        }, 0)
     
     // 统计各状态的预约数
     const statusCounts = {
@@ -205,13 +279,15 @@ const loadAreaStats = async (areaId = null) => {
     }
     
     appointments.forEach(a => {
-      if (areaId) {
-        const student = persons.find(p => p.person_id === a.student_id)
-        if (student && student.area_id === areaId) {
+      if (isDateInRange(a.appointment_date, startDate, endDate)) {
+        if (areaId) {
+          const student = persons.find(p => p.person_id === a.student_id)
+          if (student && student.area_id === areaId) {
+            statusCounts[a.status] = (statusCounts[a.status] || 0) + 1
+          }
+        } else {
           statusCounts[a.status] = (statusCounts[a.status] || 0) + 1
         }
-      } else {
-        statusCounts[a.status] = (statusCounts[a.status] || 0) + 1
       }
     })
     
@@ -219,6 +295,7 @@ const loadAreaStats = async (areaId = null) => {
       studentCount,
       coachCount,
       appointmentCount,
+      rechargeTotal,
       statusCounts
     }
     
@@ -272,6 +349,17 @@ const updateStatusChart = () => {
   }
   
   statusChart.value.setOption(option)
+}
+
+// 应用日期筛选
+const applyDateFilter = () => {
+  loadAreaStats(selectedArea.value?.area_id, dateRange.value[0], dateRange.value[1])
+}
+
+// 重置日期筛选
+const resetDateFilter = () => {
+  dateRange.value = [null, null]
+  loadAreaStats(selectedArea.value?.area_id)
 }
 
 // 监听窗口大小变化，调整图表大小
@@ -339,7 +427,7 @@ onMounted(() => {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 20px;
   margin: 20px 0;
 }

@@ -15,16 +15,19 @@
 ## Vibe Coding平台
 TRAE CN
 Doubao-Seed 2.0 code
+DBeaver CE
+MacOS
 
 ## 技术架构
 - Vue3
-- FastAPI
-- DAO
+- FastAPI(Python3.11)
+- DAO（没有使用SQLAlchemy）
 - SQLLite
 
 ## 开发备注
 尝试过在系统里点击一个按钮，然后自动给学员或者教练发送微信。可以在网络上查到方法，但是已经被腾讯以安全的理由禁用。
 
 ## 更新日志
+- 2026-04-11：添加审计相关模块。
 - 2026-04-10：添加充值相关模块。
 - 2026-04-09：基础功能搭建。

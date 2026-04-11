@@ -36,6 +36,10 @@
             <el-icon><DataAnalysis /></el-icon>
             <span>区域统计</span>
           </el-menu-item>
+          <el-menu-item index="/audit-logs">
+            <el-icon><View /></el-icon>
+            <span>操作审计</span>
+          </el-menu-item>
         </el-menu>
       </el-aside>
       <el-main class="app-main">
@@ -48,7 +52,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { Location, User, Calendar, DataAnalysis, Money } from '@element-plus/icons-vue'
+import { Location, User, Calendar, DataAnalysis, Money, View } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const activeMenu = computed(() => route.path)

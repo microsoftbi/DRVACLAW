@@ -70,6 +70,21 @@ def init_db():
         )
     ''')
     
+    # 创建操作审计表
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS audit_log (
+            audit_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            operator TEXT NOT NULL,
+            student_id INTEGER,
+            coach_id INTEGER,
+            operation_time TEXT NOT NULL,
+            operation_type TEXT NOT NULL,
+            operation_result TEXT NOT NULL,
+            FOREIGN KEY (student_id) REFERENCES person(person_id),
+            FOREIGN KEY (coach_id) REFERENCES person(person_id)
+        )
+    ''')
+    
     conn.commit()
     conn.close()
 
