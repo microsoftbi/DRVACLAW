@@ -52,7 +52,7 @@ def insert_test_data():
         surname = random.choice(surnames)
         name = f'{surname}学员'
         phone = f'13800138{str(i).zfill(3)}'
-        register_time = f'2026-01-{str(i).zfill(2)}'
+        register_time = f'2026-04-{str(i).zfill(2)}'
         area_id = (i % 12) + 1  # 分配到不同的区域
         persons.append((name, phone, register_time, area_id, '学员'))
     
@@ -61,7 +61,7 @@ def insert_test_data():
         surname = random.choice(surnames)
         name = f'{surname}教练'
         phone = f'13900139{str(i).zfill(3)}'
-        register_time = f'2026-01-{str(i).zfill(2)}'
+        register_time = f'2026-04-{str(i).zfill(2)}'
         area_id = (i % 12) + 1  # 分配到不同的区域
         persons.append((name, phone, register_time, area_id, '教练'))
     

@@ -10,15 +10,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from Backend.routers import area, person, appointment, recharge, balance, audit
 from Backend.db.init_db import init_db
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    init_db()
-    yield
-
 app = FastAPI(
     title="驾驶陪练小龙虾 API", 
-    version="1.0.0",
-    lifespan=lifespan
+    version="1.0.0"
 )
 
 app.add_middleware(

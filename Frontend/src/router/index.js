@@ -6,6 +6,7 @@ import AreaStatistics from '../views/AreaStatistics.vue'
 import RechargeManagement from '../views/RechargeManagement.vue'
 import BalanceQuery from '../views/BalanceQuery.vue'
 import AuditLog from '../views/AuditLog.vue'
+import PivotAnalysis from '../views/PivotAnalysis.vue'
 
 const routes = [
   { path: '/', redirect: '/appointments' },
@@ -15,7 +16,8 @@ const routes = [
   { path: '/areas', component: AreaManagement },
   { path: '/persons', component: PersonManagement },
   { path: '/area-statistics', component: AreaStatistics },
-  { path: '/audit-logs', component: AuditLog }
+  { path: '/audit-logs', component: AuditLog },
+  { path: '/pivot-analysis', component: PivotAnalysis }
 ]
 
 const router = createRouter({

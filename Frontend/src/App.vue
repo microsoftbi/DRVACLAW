@@ -40,6 +40,10 @@
             <el-icon><View /></el-icon>
             <span>操作审计</span>
           </el-menu-item>
+          <el-menu-item index="/pivot-analysis">
+            <el-icon><DataAnalysis /></el-icon>
+            <span>透视分析</span>
+          </el-menu-item>
         </el-menu>
       </el-aside>
       <el-main class="app-main">
