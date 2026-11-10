@@ -38,24 +38,24 @@ def create_appointment(student_name, student_area, coach_name, coach_area, date,
             return {"error": f"未找到教练区域：{coach_area}"}
         
         # 2. 获取学员ID
-        students = requests.get(f"{BASE_URL}/api/persons/students").json()
+        students = requests.get(f"{BASE_URL}/api/students").json()
         student_id = None
         
         for student in students:
             if student["name"] == student_name and student["area_id"] == student_area_id:
-                student_id = student["person_id"]
+                student_id = student["student_id"]
                 break
         
         if not student_id:
             raise Exception(f"未找到学员：{student_name} (区域：{student_area})")
         
         # 3. 获取教练ID
-        coaches = requests.get(f"{BASE_URL}/api/persons/coaches").json()
+        coaches = requests.get(f"{BASE_URL}/api/coaches").json()
         coach_id = None
         
         for coach in coaches:
             if coach["name"] == coach_name and coach["area_id"] == coach_area_id:
-                coach_id = coach["person_id"]
+                coach_id = coach["coach_id"]
                 break
         
         if not coach_id:
@@ -96,12 +96,12 @@ def create_recharge(student_phone, amount, courses):
     """
     try:
         # 1. 根据手机号获取学员ID
-        students = requests.get(f"{BASE_URL}/api/persons/students").json()
+        students = requests.get(f"{BASE_URL}/api/students").json()
         student_id = None
         
         for student in students:
             if student["phone"] == student_phone:
-                student_id = student["person_id"]
+                student_id = student["student_id"]
                 break
         
         if not student_id:
@@ -144,8 +144,8 @@ def get_confirmed_courses_by_date(date):
         for appointment in appointments:
             if appointment["appointment_date"] == date and appointment["status"] == "已确认":
                 # 获取学员和教练信息
-                student_info = requests.get(f"{BASE_URL}/api/persons/{appointment['student_id']}").json()
-                coach_info = requests.get(f"{BASE_URL}/api/persons/{appointment['coach_id']}").json()
+                student_info = requests.get(f"{BASE_URL}/api/students/{appointment['student_id']}").json()
+                coach_info = requests.get(f"{BASE_URL}/api/coaches/{appointment['coach_id']}").json()
                 
                 course_info = {
                     "appointment_id": appointment["appointment_id"],

@@ -20,7 +20,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="recharge in (recharges || [])" :key="recharge.recharge_id">
+        <tr v-for="recharge in paginatedRecharges" :key="recharge.recharge_id">
           <td>{{ recharge.recharge_id }}</td>
           <td>{{ getStudentName(recharge.student_id) }}</td>
           <td>{{ recharge.amount }}</td>
@@ -58,9 +58,9 @@
           <el-select v-model="form.student_id" placeholder="请选择学员" style="width: 100%;" filterable>
             <el-option
               v-for="student in students"
-              :key="student.person_id"
+              :key="student.student_id"
               :label="`${student.name} - ${getAreaName(student.area_id)} - ${student.phone}`"
-              :value="student.person_id"
+              :value="student.student_id"
             />
           </el-select>
         </el-form-item>
@@ -93,8 +93,9 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import rechargeApi from '../api/recharge'
-import personApi from '../api/person'
+import studentApi from '../api/student'
 import areaApi from '../api/area'
+import { createStudentNameGetter } from '../composables/useStudentName'
 
 const recharges = ref([])
 const students = ref([])
@@ -141,8 +142,8 @@ const loadAreas = async () => {
 
 const loadStudents = async () => {
   try {
-    const response = await personApi.getAll()
-    students.value = (response || []).filter(person => person.type === '学员')
+    const response = await studentApi.getAll()
+    students.value = response || []
   } catch (error) {
     ElMessage.error('获取学员列表失败')
     students.value = []
@@ -155,11 +156,7 @@ const getAreaName = (areaId) => {
   return area ? area.name : '未知区域'
 }
 
-const getStudentName = (studentId) => {
-  if (!students.value) return '未知学员'
-  const student = students.value.find(s => s.person_id === studentId)
-  return student ? student.name : '未知学员'
-}
+const getStudentName = createStudentNameGetter(students)
 
 const openDialog = () => {
   isEdit.value = false

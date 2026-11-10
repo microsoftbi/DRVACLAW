@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="驾驶智陪工作台-UAT" tests="62" failures="0" errors="0" time="0.260" timestamp="2026-11-11T07:31:56">
+  <testcase classname="环境" name="ENV-01 后端欢迎接口" time="0.009">
+  </testcase>
+  <testcase classname="环境" name="ENV-02 健康检查" time="0.003">
+  </testcase>
+  <testcase classname="环境" name="ENV-03 前端页面可访问" time="0.002">
+  </testcase>
+  <testcase classname="环境" name="ENV-04 API 文档可访问" time="0.001">
+  </testcase>
+  <testcase classname="环境" name="ENV-05 跨域预检" time="0.001">
+  </testcase>
+  <testcase classname="区域管理" name="AREA-01 区域列表查询" time="0.002">
+  </testcase>
+  <testcase classname="区域管理" name="AREA-02 新增区域" time="0.002">
+  </testcase>
+  <testcase classname="区域管理" name="AREA-03 区域详情查询" time="0.003">
+  </testcase>
+  <testcase classname="区域管理" name="AREA-04 区域重命名" time="0.003">
+  </testcase>
+  <testcase classname="区域管理" name="AREA-05 区域名称唯一性" time="0.003">
+  </testcase>
+  <testcase classname="区域管理" name="AREA-06 查询不存在区域" time="0.002">
+  </testcase>
+  <testcase classname="区域管理" name="AREA-07 删除区域" time="0.007">
+  </testcase>
+  <testcase classname="车辆管理" name="VEH-01 车辆列表与车型合法性" time="0.003">
+  </testcase>
+  <testcase classname="车辆管理" name="VEH-02 新增 SUV 车辆" time="0.003">
+  </testcase>
+  <testcase classname="车辆管理" name="VEH-03 新增轿车" time="0.004">
+  </testcase>
+  <testcase classname="车辆管理" name="VEH-04 非法车型校验" time="0.001">
+  </testcase>
+  <testcase classname="车辆管理" name="VEH-05 修改车辆型号" time="0.003">
+  </testcase>
+  <testcase classname="车辆管理" name="VEH-06 查询不存在车辆" time="0.003">
+  </testcase>
+  <testcase classname="车辆管理" name="VEH-07 删除车辆" time="0.010">
+  </testcase>
+  <testcase classname="学员管理" name="STU-01 学员列表" time="0.002">
+  </testcase>
+  <testcase classname="学员管理" name="STU-02 新增学员（驾龄/备注）" time="0.005">
+  </testcase>
+  <testcase classname="学员管理" name="STU-03 学员详情" time="0.003">
+  </testcase>
+  <testcase classname="学员管理" name="STU-04 修改驾龄与备注" time="0.004">
+  </testcase>
+  <testcase classname="学员管理" name="STU-05 手机号唯一性" time="0.003">
+  </testcase>
+  <testcase classname="学员管理" name="STU-06 查询不存在学员" time="0.002">
+  </testcase>
+  <testcase classname="学员管理" name="STU-07 删除学员" time="0.011">
+  </testcase>
+  <testcase classname="教练管理" name="COA-01 教练列表含车辆关联" time="0.003">
+  </testcase>
+  <testcase classname="教练管理" name="COA-02 新增教练并关联两辆车" time="0.007">
+  </testcase>
+  <testcase classname="教练管理" name="COA-03 教练详情含车辆" time="0.003">
+  </testcase>
+  <testcase classname="教练管理" name="COA-04 教练车辆明细" time="0.004">
+  </testcase>
+  <testcase classname="教练管理" name="COA-05 调整车辆关联" time="0.004">
+  </testcase>
+  <testcase classname="教练管理" name="COA-06 教练手机号唯一性" time="0.002">
+  </testcase>
+  <testcase classname="教练管理" name="COA-07 查询不存在教练" time="0.002">
+  </testcase>
+  <testcase classname="教练管理" name="COA-08 删除教练" time="0.011">
+  </testcase>
+  <testcase classname="预约管理" name="APT-01 预约列表" time="0.003">
+  </testcase>
+  <testcase classname="预约管理" name="APT-02 创建待确认预约" time="0.005">
+  </testcase>
+  <testcase classname="预约管理" name="APT-03 预约详情" time="0.002">
+  </testcase>
+  <testcase classname="预约管理" name="APT-04 按学员查询预约" time="0.003">
+  </testcase>
+  <testcase classname="预约管理" name="APT-05 按教练查询预约" time="0.003">
+  </testcase>
+  <testcase classname="预约管理" name="APT-06 按日期查询预约" time="0.002">
+  </testcase>
+  <testcase classname="预约管理" name="APT-07 确认预约并记录审计" time="0.005">
+  </testcase>
+  <testcase classname="预约管理" name="APT-08 非法状态校验" time="0.002">
+  </testcase>
+  <testcase classname="预约管理" name="APT-09 非法时段校验" time="0.002">
+  </testcase>
+  <testcase classname="预约管理" name="APT-10 查询不存在预约" time="0.002">
+  </testcase>
+  <testcase classname="预约管理" name="APT-11 修改不存在预约" time="0.003">
+  </testcase>
+  <testcase classname="预约管理" name="APT-12 删除预约" time="0.010">
+  </testcase>
+  <testcase classname="预约管理" name="APT-13 预约完成扣减课时" time="0.015">
+  </testcase>
+  <testcase classname="预约管理" name="APT-14 预约引用不存在学员" time="0.002">
+  </testcase>
+  <testcase classname="充值管理" name="REC-01 新增充值记录" time="0.004">
+  </testcase>
+  <testcase classname="充值管理" name="REC-02 充值自动生成余额记录" time="0.003">
+  </testcase>
+  <testcase classname="充值管理" name="REC-03 充值列表查询" time="0.003">
+  </testcase>
+  <testcase classname="充值管理" name="REC-04 修改充值课时并重算余额" time="0.007">
+  </testcase>
+  <testcase classname="充值管理" name="REC-05 删除充值并清理余额" time="0.006">
+  </testcase>
+  <testcase classname="充值管理" name="REC-06 查询不存在充值记录" time="0.003">
+  </testcase>
+  <testcase classname="余额记录" name="BAL-01 余额记录列表" time="0.003">
+  </testcase>
+  <testcase classname="余额记录" name="BAL-02 按学员查询余额" time="0.003">
+  </testcase>
+  <testcase classname="余额记录" name="BAL-03 查询不存在余额记录" time="0.002">
+  </testcase>
+  <testcase classname="操作审计" name="AUD-01 审计日志列表" time="0.006">
+  </testcase>
+  <testcase classname="操作审计" name="AUD-02 按学员查询审计" time="0.002">
+  </testcase>
+  <testcase classname="操作审计" name="AUD-03 按教练查询审计" time="0.002">
+  </testcase>
+  <testcase classname="操作审计" name="AUD-04 无记录学员返回 404" time="0.002">
+  </testcase>
+  <testcase classname="端到端" name="E2E-01 充值→预约→确认→完成→余额扣减→审计追溯" time="0.021">
+  </testcase>
+</testsuite>

@@ -1,135 +1,128 @@
 <template>
   <div class="appointment-management">
-    <h2>预约管理</h2>
-    
-    <div class="filter-container" style="margin-top: 20px; padding: 16px; background-color: #f5f7fa; border-radius: 4px;">
-      <el-row :gutter="20">
-        <el-col :span="6">
-          <el-form-item label="学员">
-            <el-select v-model="filters.student_id" placeholder="选择学员" clearable filterable>
-              <el-option label="全部" value="" />
-              <el-option v-for="student in students" :key="student.person_id" :label="`${student.name} ${student.phone}`" :value="student.person_id" />
-            </el-select>
-          </el-form-item>
-        </el-col>
-        <el-col :span="6">
-          <el-form-item label="学员区域">
-            <el-select v-model="filters.student_area_id" placeholder="选择学员区域" clearable>
-              <el-option label="全部" value="" />
-              <el-option v-for="area in areas" :key="area.area_id" :label="area.name" :value="area.area_id" />
-            </el-select>
-          </el-form-item>
-        </el-col>
-        <el-col :span="6">
-          <el-form-item label="教练">
-            <el-select v-model="filters.coach_id" placeholder="选择教练" clearable filterable>
-              <el-option label="全部" value="" />
-              <el-option v-for="coach in coaches" :key="coach.person_id" :label="coach.name" :value="coach.person_id" />
-            </el-select>
-          </el-form-item>
-        </el-col>
-        <el-col :span="6">
-          <el-form-item label="教练区域">
-            <el-select v-model="filters.coach_area_id" placeholder="选择教练区域" clearable>
-              <el-option label="全部" value="" />
-              <el-option v-for="area in areas" :key="area.area_id" :label="area.name" :value="area.area_id" />
-            </el-select>
-          </el-form-item>
-        </el-col>
-        <el-col :span="6">
-          <el-form-item label="时间">
-            <el-date-picker
-              v-model="filters.date"
-              type="date"
-              placeholder="选择日期"
-              value-format="YYYY-MM-DD"
-              clearable
-            />
-          </el-form-item>
-        </el-col>
-        <el-col :span="6">
-          <el-form-item label="状态">
-            <el-select v-model="filters.status" placeholder="选择状态" clearable>
-              <el-option label="全部" value="" />
-              <el-option label="待确认" value="待确认" />
-              <el-option label="已确认" value="已确认" />
-              <el-option label="已取消" value="已取消" />
-              <el-option label="已完成" value="已完成" />
-            </el-select>
-          </el-form-item>
-        </el-col>
-        <el-col :span="6">
-          <el-form-item label="操作">
-            <el-button type="primary" @click="applyFilters">筛选</el-button>
-            <el-button @click="resetFilters">重置</el-button>
-          </el-form-item>
-        </el-col>
-      </el-row>
-    </div>
-    
-    <!-- 顶部分页和添加按钮 -->
-    <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
+    <div class="page-header">
+      <div>
+        <h2 class="page-title">预约管理</h2>
+        <p class="page-sub">共 {{ allAppointments.length }} 条预约 · 待确认 {{ pendingCount }} 条</p>
+      </div>
       <el-button type="primary" @click="showAddDialog">添加预约</el-button>
-      <el-pagination
-        v-model:current-page="currentPage"
-        v-model:page-size="pageSize"
-        :page-sizes="[10, 20, 50, 100]"
-        layout="total, sizes, prev, pager, next, jumper"
-        :total="filteredAppointments.length"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-      />
     </div>
     
-    <table class="data-table" style="width: 100%; margin-top: 20px; border-collapse: collapse;">
+    <div class="filter-container">
+      <div class="filter-item">
+        <label>学员</label>
+        <el-select v-model="filters.student_id" placeholder="选择学员" clearable filterable>
+          <el-option label="全部" value="" />
+          <el-option v-for="student in students" :key="student.student_id" :label="`${student.name} ${student.phone}`" :value="student.student_id" />
+        </el-select>
+      </div>
+      <div class="filter-item">
+        <label>教练</label>
+        <el-select v-model="filters.coach_id" placeholder="选择教练" clearable filterable>
+          <el-option label="全部" value="" />
+          <el-option v-for="coach in coaches" :key="coach.coach_id" :label="coach.name" :value="coach.coach_id" />
+        </el-select>
+      </div>
+      <div class="filter-item">
+        <label>预约日期</label>
+        <el-date-picker
+          v-model="filters.date"
+          type="date"
+          placeholder="选择日期"
+          value-format="YYYY-MM-DD"
+          clearable
+          style="width: 100%;"
+        />
+      </div>
+      <div class="filter-item">
+        <label>状态</label>
+        <el-select v-model="filters.status" placeholder="全部状态" clearable>
+          <el-option label="全部" value="" />
+          <el-option label="待确认" value="待确认" />
+          <el-option label="已确认" value="已确认" />
+          <el-option label="已完成" value="已完成" />
+          <el-option label="已取消" value="已取消" />
+        </el-select>
+      </div>
+      <div class="filter-actions">
+        <el-button type="primary" @click="applyFilters">筛选</el-button>
+        <el-button @click="resetFilters">重置</el-button>
+      </div>
+    </div>
+
+    <div class="status-tabs">
+      <button
+        v-for="tab in statusTabs"
+        :key="tab.label"
+        type="button"
+        class="status-tab"
+        :class="{ active: (filters.status || '') === tab.value }"
+        @click="selectStatus(tab.value)"
+      >
+        {{ tab.label }}
+        <span class="count">{{ tab.count }}</span>
+      </button>
+    </div>
+    
+    <table class="data-table">
       <thead>
         <tr>
-          <th style="width: 100px; text-align: left; padding: 12px; border: 1px solid #ddd; background-color: #f5f7fa;">预约ID</th>
-          <th style="width: 120px; text-align: left; padding: 12px; border: 1px solid #ddd; background-color: #f5f7fa;">学员</th>
-          <th style="width: 120px; text-align: left; padding: 12px; border: 1px solid #ddd; background-color: #f5f7fa;">学员区域</th>
-          <th style="width: 120px; text-align: left; padding: 12px; border: 1px solid #ddd; background-color: #f5f7fa;">教练</th>
-          <th style="width: 120px; text-align: left; padding: 12px; border: 1px solid #ddd; background-color: #f5f7fa;">教练区域</th>
-          <th style="width: 120px; text-align: left; padding: 12px; border: 1px solid #ddd; background-color: #f5f7fa;">预约日期</th>
-          <th style="width: 120px; text-align: left; padding: 12px; border: 1px solid #ddd; background-color: #f5f7fa;">预约时间</th>
-          <th style="width: 100px; text-align: left; padding: 12px; border: 1px solid #ddd; background-color: #f5f7fa;">状态</th>
-          <th style="width: 120px; text-align: left; padding: 12px; border: 1px solid #ddd; background-color: #f5f7fa;">创建时间</th>
-          <th style="width: 80px; text-align: left; padding: 12px; border: 1px solid #ddd; background-color: #f5f7fa;">明细</th>
-          <th style="width: 250px; text-align: left; padding: 12px; border: 1px solid #ddd; background-color: #f5f7fa;">操作</th>
+          <th style="width: 96px;">预约</th>
+          <th>学员</th>
+          <th style="width: 150px;">教练</th>
+          <th style="width: 180px;">时段</th>
+          <th style="width: 100px;">状态</th>
+          <th style="width: 110px;">操作</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="appt in paginatedAppointments" :key="appt.appointment_id">
-          <td style="text-align: left; padding: 12px; border: 1px solid #ddd;">{{ appt.appointment_id }}</td>
-          <td style="text-align: left; padding: 12px; border: 1px solid #ddd;">{{ getPersonName(appt.student_id) }} {{ getPersonPhone(appt.student_id) }}</td>
-          <td style="text-align: left; padding: 12px; border: 1px solid #ddd;">{{ getPersonArea(appt.student_id) }}</td>
-          <td style="text-align: left; padding: 12px; border: 1px solid #ddd;">{{ getPersonName(appt.coach_id) }}</td>
-          <td style="text-align: left; padding: 12px; border: 1px solid #ddd;">{{ getPersonArea(appt.coach_id) }}</td>
-          <td style="text-align: left; padding: 12px; border: 1px solid #ddd;">{{ appt.appointment_date }}</td>
-          <td style="text-align: left; padding: 12px; border: 1px solid #ddd;">{{ appt.start_time }}:00 - {{ appt.end_time }}:00</td>
-          <td style="text-align: left; padding: 12px; border: 1px solid #ddd;">
-            <el-tag :type="getStatusType(appt.status)">{{ appt.status }}</el-tag>
+          <td>
+            <div class="cell-main id">#{{ appt.appointment_id }}</div>
+            <div class="cell-sub">{{ shortDate(appt.create_time) }} 创建</div>
           </td>
-          <td style="text-align: left; padding: 12px; border: 1px solid #ddd;">{{ appt.create_time }}</td>
-          <td style="text-align: left; padding: 12px; border: 1px solid #ddd;">
-            <el-button size="small" @click="showDetailDialog(appt)">明细</el-button>
+          <td>
+            <div class="cell-main">{{ getStudentName(appt.student_id) }}</div>
+            <div class="cell-sub">{{ getStudentPhone(appt.student_id) }} · {{ getStudentArea(appt.student_id) }}</div>
           </td>
-          <td style="text-align: left; padding: 12px; border: 1px solid #ddd;">
-            <el-button size="small" @click="showEditDialog(appt)">编辑</el-button>
-            <el-button size="small" type="success" @click="updateStatus(appt, '已确认')" v-if="appt.status === '待确认'">确认</el-button>
-            <el-button size="small" type="warning" @click="updateStatus(appt, '已取消')" v-if="appt.status !== '已取消'">取消</el-button>
-            <el-button size="small" type="danger" @click="deleteAppointment(appt.appointment_id)">删除</el-button>
+          <td>
+            <div class="cell-main">{{ getCoachName(appt.coach_id) }}</div>
+            <div class="cell-sub">{{ getCoachArea(appt.coach_id) }}</div>
+          </td>
+          <td>
+            <div class="cell-main">{{ appt.appointment_date }}</div>
+            <div class="cell-sub">{{ appt.start_time }}:00 – {{ appt.end_time }}:00</div>
+          </td>
+          <td>
+            <span class="status-pill" :class="getStatusClass(appt.status)"><i></i>{{ appt.status }}</span>
+          </td>
+          <td>
+            <div class="row-actions">
+              <el-button link type="primary" @click="showDetailDialog(appt)">详情</el-button>
+              <el-dropdown trigger="click" @command="(command) => handleRowCommand(command, appt)">
+                <el-button link class="more-btn">⋯</el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="edit">编辑</el-dropdown-item>
+                    <el-dropdown-item v-if="appt.status === '待确认'" command="confirm">确认</el-dropdown-item>
+                    <el-dropdown-item v-if="appt.status !== '已取消'" command="cancel">取消预约</el-dropdown-item>
+                    <el-dropdown-item command="delete" divided style="color: #f56c6c;">删除</el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
           </td>
         </tr>
       </tbody>
     </table>
-    
-    <!-- 分页 -->
-    <div style="margin-top: 20px; text-align: right;">
+
+    <div class="table-footer">
+      <span class="hint">共 {{ filteredAppointments.length }} 条</span>
       <el-pagination
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
         :page-sizes="[10, 20, 50, 100]"
-        layout="total, sizes, prev, pager, next, jumper"
+        layout="sizes, prev, pager, next"
         :total="filteredAppointments.length"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
@@ -140,12 +133,12 @@
       <el-form :model="form" label-width="100px">
         <el-form-item label="学员">
           <el-select v-model="form.student_id">
-            <el-option v-for="student in students" :key="student.person_id" :label="`${student.name} ${student.phone}`" :value="student.person_id" />
+            <el-option v-for="student in students" :key="student.student_id" :label="`${student.name} ${student.phone}`" :value="student.student_id" />
           </el-select>
         </el-form-item>
         <el-form-item label="教练">
           <el-select v-model="form.coach_id">
-            <el-option v-for="coach in coaches" :key="coach.person_id" :label="coach.name" :value="coach.person_id" />
+            <el-option v-for="coach in coaches" :key="coach.coach_id" :label="coach.name" :value="coach.coach_id" />
           </el-select>
         </el-form-item>
         <el-form-item label="预约日期">
@@ -190,15 +183,15 @@
         </div>
         <div class="detail-section">
           <h3>学员信息</h3>
-          <p><strong>姓名：</strong>{{ getPersonName(currentAppointment.student_id) }}</p>
-          <p><strong>手机号：</strong>{{ getPersonPhone(currentAppointment.student_id) }}</p>
-          <p><strong>区域：</strong>{{ getPersonArea(currentAppointment.student_id) }}</p>
+          <p><strong>姓名：</strong>{{ getStudentName(currentAppointment.student_id) }}</p>
+          <p><strong>手机号：</strong>{{ getStudentPhone(currentAppointment.student_id) }}</p>
+          <p><strong>区域：</strong>{{ getStudentArea(currentAppointment.student_id) }}</p>
         </div>
         <div class="detail-section">
           <h3>教练信息</h3>
-          <p><strong>姓名：</strong>{{ getPersonName(currentAppointment.coach_id) }}</p>
-          <p><strong>手机号：</strong>{{ getPersonPhone(currentAppointment.coach_id) }}</p>
-          <p><strong>区域：</strong>{{ getPersonArea(currentAppointment.coach_id) }}</p>
+          <p><strong>姓名：</strong>{{ getCoachName(currentAppointment.coach_id) }}</p>
+          <p><strong>手机号：</strong>{{ getCoachPhone(currentAppointment.coach_id) }}</p>
+          <p><strong>区域：</strong>{{ getCoachArea(currentAppointment.coach_id) }}</p>
         </div>
       </div>
       <template #footer>
@@ -212,13 +205,14 @@
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { appointmentApi } from '../api/appointment'
-import { personApi } from '../api/person'
+import { studentApi } from '../api/student'
+import { coachApi } from '../api/coach'
 import { areaApi } from '../api/area'
+import { createStudentNameGetter } from '../composables/useStudentName'
 
 const appointments = ref([])
 const students = ref([])
 const coaches = ref([])
-const persons = ref([])
 const areas = ref([])
 const dialogVisible = ref(false)
 const detailDialogVisible = ref(false)
@@ -226,13 +220,34 @@ const isEdit = ref(false)
 const currentId = ref(null)
 const currentAppointment = ref(null)
 const form = ref({ student_id: null, coach_id: null, appointment_date: '', start_time: 9, end_time: 11, status: '待确认' })
-const filters = ref({ student_id: null, student_area_id: null, coach_id: null, coach_area_id: null, date: null, status: null })
+const filters = ref({ student_id: null, coach_id: null, date: null, status: null })
 
 // 分页
 const currentPage = ref(1)
 const pageSize = ref(20)
 const allAppointments = ref([])
 const filteredAppointments = ref([])
+
+const statusTabs = computed(() => {
+  const counts = { '待确认': 0, '已确认': 0, '已完成': 0, '已取消': 0 }
+  allAppointments.value.forEach(item => {
+    if (counts[item.status] !== undefined) counts[item.status] += 1
+  })
+  return [
+    { value: '', label: '全部', count: allAppointments.value.length },
+    { value: '待确认', label: '待确认', count: counts['待确认'] },
+    { value: '已确认', label: '已确认', count: counts['已确认'] },
+    { value: '已完成', label: '已完成', count: counts['已完成'] },
+    { value: '已取消', label: '已取消', count: counts['已取消'] }
+  ]
+})
+
+const pendingCount = computed(() => statusTabs.value[1].count)
+
+const selectStatus = (value) => {
+  filters.value.status = value || null
+  applyFilters()
+}
 
 // 分页数据
 const paginatedAppointments = computed(() => {
@@ -252,29 +267,47 @@ const loadAppointments = async () => {
 
 const loadPersons = async () => {
   try {
-    persons.value = await personApi.getAll()
-    students.value = await personApi.getStudents()
-    coaches.value = await personApi.getCoaches()
-    areas.value = await areaApi.getAll()
+    const [studentList, coachList, areaList] = await Promise.all([
+      studentApi.getAll(),
+      coachApi.getAll(),
+      areaApi.getAll()
+    ])
+    students.value = studentList || []
+    coaches.value = coachList || []
+    areas.value = areaList || []
   } catch (error) {
     ElMessage.error('加载人员列表失败')
   }
 }
 
-const getPersonName = (id) => {
-  const person = persons.value.find(p => p.person_id === id)
-  return person ? person.name : id
+const getStudentName = createStudentNameGetter(students)
+
+const getStudentPhone = (id) => {
+  const student = students.value.find(s => s.student_id === id)
+  return student ? student.phone : '-'
 }
 
-const getPersonPhone = (id) => {
-  const person = persons.value.find(p => p.person_id === id)
-  return person ? person.phone : '-'
+const getStudentArea = (id) => {
+  const student = students.value.find(s => s.student_id === id)
+  if (!student || !student.area_id) return '-'
+  const area = areas.value.find(a => a.area_id === student.area_id)
+  return area ? area.name : '-'
 }
 
-const getPersonArea = (id) => {
-  const person = persons.value.find(p => p.person_id === id)
-  if (!person || !person.area_id) return '-'
-  const area = areas.value.find(a => a.area_id === person.area_id)
+const getCoachName = (id) => {
+  const coach = coaches.value.find(c => c.coach_id === id)
+  return coach ? coach.name : id
+}
+
+const getCoachPhone = (id) => {
+  const coach = coaches.value.find(c => c.coach_id === id)
+  return coach ? coach.phone : '-'
+}
+
+const getCoachArea = (id) => {
+  const coach = coaches.value.find(c => c.coach_id === id)
+  if (!coach || !coach.area_id) return '-'
+  const area = areas.value.find(a => a.area_id === coach.area_id)
   return area ? area.name : '-'
 }
 
@@ -282,6 +315,24 @@ const getStatusType = (status) => {
   if (status === '待确认') return 'warning'
   if (status === '已确认') return 'success'
   return 'info'
+}
+
+const getStatusClass = (status) => {
+  if (status === '待确认') return 'wait'
+  if (status === '已确认' || status === '已完成') return 'ok'
+  return 'off'
+}
+
+const shortDate = (value) => {
+  if (!value) return '-'
+  return String(value).slice(5, 10)
+}
+
+const handleRowCommand = (command, row) => {
+  if (command === 'edit') showEditDialog(row)
+  if (command === 'confirm') updateStatus(row, '已确认')
+  if (command === 'cancel') updateStatus(row, '已取消')
+  if (command === 'delete') deleteAppointment(row.appointment_id)
 }
 
 const showAddDialog = () => {
@@ -370,39 +421,25 @@ const handleCurrentChange = (current) => {
 const applyFilters = () => {
   // 实现筛选逻辑
   let filtered = [...allAppointments.value]
-  
+
   if (filters.value.student_id && filters.value.student_id !== '') {
     filtered = filtered.filter(appt => appt.student_id === filters.value.student_id)
   }
-  
-  if (filters.value.student_area_id && filters.value.student_area_id !== '') {
-    filtered = filtered.filter(appt => {
-      const student = persons.value.find(p => p.person_id === appt.student_id)
-      return student && student.area_id === filters.value.student_area_id
-    })
-  }
-  
+
   if (filters.value.coach_id && filters.value.coach_id !== '') {
     filtered = filtered.filter(appt => appt.coach_id === filters.value.coach_id)
   }
-  
-  if (filters.value.coach_area_id && filters.value.coach_area_id !== '') {
-    filtered = filtered.filter(appt => {
-      const coach = persons.value.find(p => p.person_id === appt.coach_id)
-      return coach && coach.area_id === filters.value.coach_area_id
-    })
-  }
-  
+
   if (filters.value.date) {
     filtered = filtered.filter(appt => {
       return appt.appointment_date === filters.value.date
     })
   }
-  
+
   if (filters.value.status && filters.value.status !== '') {
     filtered = filtered.filter(appt => appt.status === filters.value.status)
   }
-  
+
   // 这里需要将筛选后的结果应用到表格显示
   filteredAppointments.value = filtered
   currentPage.value = 1 // 重置页码
@@ -410,7 +447,7 @@ const applyFilters = () => {
 
 const resetFilters = () => {
   // 重置筛选条件
-  filters.value = { student_id: null, student_area_id: null, coach_id: null, coach_area_id: null, date: null, status: null }
+  filters.value = { student_id: null, coach_id: null, date: null, status: null }
   // 重新加载所有预约
   loadAppointments()
   currentPage.value = 1 // 重置页码
@@ -424,27 +461,194 @@ onMounted(() => {
 
 <style scoped>
 .appointment-management {
-  padding: 20px;
   width: 100%;
   height: 100%;
   box-sizing: border-box;
+}
+
+.appointment-management .page-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--app-text);
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.page-sub {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--app-text-muted);
+}
+
+.filter-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+  margin-top: 16px;
+}
+
+.filter-item {
+  flex: 1 1 160px;
+  min-width: 140px;
+}
+
+.filter-item label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: var(--app-text-muted);
+}
+
+.filter-item :deep(.el-select) {
+  width: 100%;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.status-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 16px;
+  border-bottom: 1px solid var(--app-border);
+}
+
+.status-tab {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--app-text-muted);
+  cursor: pointer;
+}
+
+.status-tab .count {
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  background: #f3f4f6;
+  color: var(--app-text-muted);
+}
+
+.status-tab.active {
+  color: var(--app-primary-text);
+  border-bottom-color: var(--app-primary);
+  font-weight: 600;
+}
+
+.status-tab.active .count {
+  background: var(--app-primary-soft);
+  color: var(--app-primary-text);
 }
 
 .data-table {
   width: 100%;
 }
 
-.data-table th,
-.data-table td {
-  padding: 8px 12px;
-  line-height: 1.4;
+.cell-main {
   font-size: 14px;
+  line-height: 1.35;
+  color: var(--app-text);
 }
 
-.data-table td .el-button {
-  padding: 4px 12px;
+.cell-main.id {
+  color: var(--app-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.cell-sub {
+  margin-top: 2px;
   font-size: 12px;
-  margin-right: 4px;
+  line-height: 1.3;
+  color: var(--app-text-muted);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-pill i {
+  display: block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+.status-pill.wait {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.status-pill.wait i {
+  background: #d97706;
+}
+
+.status-pill.ok {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.status-pill.ok i {
+  background: #16a34a;
+}
+
+.status-pill.off {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.status-pill.off i {
+  background: #9ca3af;
+}
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.row-actions :deep(.el-button + .el-button) {
+  margin-left: 0;
+}
+
+.more-btn {
+  padding: 0 2px;
+  font-size: 16px;
+  color: var(--app-text-muted);
+}
+
+.table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--app-text-muted);
 }
 
 .detail-content {

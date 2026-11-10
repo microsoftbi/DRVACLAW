@@ -9,9 +9,9 @@
           <el-select v-model="filterForm.student_id" placeholder="请选择学员" style="width: 200px" filterable>
             <el-option
               v-for="student in students"
-              :key="student.person_id"
+              :key="student.student_id"
               :label="`${student.name} - ${getAreaName(student.area_id)}`"
-              :value="student.person_id"
+              :value="student.student_id"
             />
           </el-select>
         </el-form-item>
@@ -19,9 +19,9 @@
           <el-select v-model="filterForm.coach_id" placeholder="请选择教练" style="width: 200px" filterable>
             <el-option
               v-for="coach in coaches"
-              :key="coach.person_id"
+              :key="coach.coach_id"
               :label="`${coach.name} - ${getAreaName(coach.area_id)}`"
-              :value="coach.person_id"
+              :value="coach.coach_id"
             />
           </el-select>
         </el-form-item>
@@ -46,7 +46,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="log in filteredLogs" :key="log.audit_id">
+        <tr v-for="log in paginatedLogs" :key="log.audit_id">
           <td>{{ log.audit_id }}</td>
           <td>{{ log.operator }}</td>
           <td>{{ getStudentName(log.student_id) }}</td>
@@ -65,7 +65,7 @@
         v-model:page-size="pageSize"
         :page-sizes="[10, 20, 50, 100]"
         layout="total, sizes, prev, pager, next, jumper"
-        :total="(auditLogs || []).length"
+        :total="filteredLogs.length"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
       />
@@ -77,8 +77,10 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import auditApi from '../api/audit'
-import personApi from '../api/person'
+import studentApi from '../api/student'
+import coachApi from '../api/coach'
 import areaApi from '../api/area'
+import { createStudentNameGetter } from '../composables/useStudentName'
 
 const auditLogs = ref([])
 const students = ref([])
@@ -93,10 +95,8 @@ const filterForm = ref({
 })
 
 const paginatedLogs = computed(() => {
-  if (!auditLogs.value) return []
   const start = (currentPage.value - 1) * pageSize.value
-  const end = start + pageSize.value
-  return auditLogs.value.slice(start, end)
+  return filteredLogs.value.slice(start, start + pageSize.value)
 })
 
 const filteredLogs = computed(() => {
@@ -124,6 +124,7 @@ const loadAuditLogs = async () => {
       logs = await auditApi.getAll()
     }
     auditLogs.value = logs || []
+    currentPage.value = 1
   } catch (error) {
     ElMessage.error('获取操作审计记录失败')
     auditLogs.value = []
@@ -142,10 +143,12 @@ const loadAreas = async () => {
 
 const loadStudentsAndCoaches = async () => {
   try {
-    const response = await personApi.getAll()
-    const persons = response || []
-    students.value = persons.filter(person => person.type === '学员')
-    coaches.value = persons.filter(person => person.type === '教练')
+    const [studentList, coachList] = await Promise.all([
+      studentApi.getAll(),
+      coachApi.getAll()
+    ])
+    students.value = studentList || []
+    coaches.value = coachList || []
   } catch (error) {
     ElMessage.error('获取人员列表失败')
     students.value = []
@@ -159,15 +162,11 @@ const getAreaName = (areaId) => {
   return area ? area.name : '未知区域'
 }
 
-const getStudentName = (studentId) => {
-  if (!students.value || !studentId) return '未知学员'
-  const student = students.value.find(s => s.person_id === studentId)
-  return student ? student.name : '未知学员'
-}
+const getStudentName = createStudentNameGetter(students)
 
 const getCoachName = (coachId) => {
   if (!coaches.value || !coachId) return '未知教练'
-  const coach = coaches.value.find(c => c.person_id === coachId)
+  const coach = coaches.value.find(c => c.coach_id === coachId)
   return coach ? coach.name : '未知教练'
 }
 

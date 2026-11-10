@@ -1,0 +1,165 @@
+:root {
+  /* 驾驶智陪工作台 · 设计变量 */
+  --app-bg: #f5f7fa;
+  --app-surface: #ffffff;
+  --app-surface-muted: #f5f7fa;
+  --app-text: #1f2937;
+  --app-text-muted: #6b7280;
+  --app-border: #e5e7eb;
+  --app-border-light: #f0f1f4;
+  --app-primary: #2f54eb;
+  --app-primary-soft: #eef1ff;
+  --app-primary-text: #1e2a78;
+  --app-radius: 8px;
+  --app-radius-card: 12px;
+  --app-shadow-card: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.04);
+
+  /* Element Plus 主题色对齐 */
+  --el-color-primary: #2f54eb;
+  --el-color-primary-light-3: #6b86f0;
+  --el-color-primary-light-5: #97aaf5;
+  --el-color-primary-light-7: #c2ccf9;
+  --el-color-primary-light-8: #d5dcfb;
+  --el-color-primary-light-9: #eef1ff;
+  --el-color-primary-dark-2: #2643bc;
+  --el-border-radius-base: 8px;
+  --el-border-radius-small: 6px;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  background: var(--app-bg);
+  color: var(--app-text);
+  font-family: "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 页面标题 */
+.app-main h1,
+.app-main h2 {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  color: var(--app-text);
+}
+
+/* 原生表格统一为卡片样式 */
+.app-main table.data-table,
+.app-main table.custom-table {
+  width: 100% !important;
+  margin-top: 16px !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  background: var(--app-surface) !important;
+  border: 1px solid var(--app-border) !important;
+  border-radius: var(--app-radius-card) !important;
+  overflow: hidden;
+  box-shadow: var(--app-shadow-card);
+}
+
+.app-main table.data-table th,
+.app-main table.custom-table th {
+  padding: 12px 16px !important;
+  background: #f9fafb !important;
+  border: none !important;
+  border-bottom: 1px solid var(--app-border) !important;
+  color: var(--app-text-muted) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  white-space: nowrap;
+}
+
+.app-main table.data-table td,
+.app-main table.custom-table td {
+  padding: 12px 16px !important;
+  border: none !important;
+  border-bottom: 1px solid var(--app-border-light) !important;
+  color: var(--app-text) !important;
+  font-size: 14px !important;
+}
+
+.app-main table.data-table tbody tr:last-child td,
+.app-main table.custom-table tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+.app-main table.data-table tbody tr:hover td,
+.app-main table.custom-table tbody tr:hover td {
+  background: #fafbff !important;
+}
+
+.app-main table.data-table th:first-child,
+.app-main table.custom-table th:first-child {
+  border-top-left-radius: 11px !important;
+}
+
+.app-main table.data-table th:last-child,
+.app-main table.custom-table th:last-child {
+  border-top-right-radius: 11px !important;
+}
+
+/* 筛选区统一为白卡片 */
+.app-main .filter-container {
+  background: var(--app-surface) !important;
+  border: 1px solid var(--app-border) !important;
+  border-radius: var(--app-radius-card) !important;
+  padding: 16px !important;
+  box-shadow: var(--app-shadow-card);
+}
+
+/* Element Plus 组件微调 */
+.app-main .el-button {
+  border-radius: var(--app-radius);
+  font-weight: 500;
+}
+
+.app-main .el-button--small {
+  border-radius: 6px;
+}
+
+.app-main .el-input__wrapper,
+.app-main .el-select__wrapper,
+.app-main .el-textarea__inner,
+.app-main .el-input-number .el-input__wrapper {
+  border-radius: var(--app-radius);
+}
+
+.app-main .el-tag {
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.app-main .el-card,
+.app-main .el-table {
+  border-radius: var(--app-radius-card);
+  box-shadow: var(--app-shadow-card);
+}
+
+.app-main .el-table {
+  border: 1px solid var(--app-border);
+}
+
+.app-main .el-table th.el-table__cell {
+  background: #f9fafb;
+  color: var(--app-text-muted);
+  font-weight: 500;
+}
+
+.app-main .el-table td.el-table__cell {
+  color: var(--app-text);
+}
+
+.el-dialog {
+  border-radius: var(--app-radius-card);
+  overflow: hidden;
+}
+
+.el-message-box {
+  border-radius: var(--app-radius-card);
+}

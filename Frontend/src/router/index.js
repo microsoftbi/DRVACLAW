@@ -1,23 +1,17 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import AreaManagement from '../views/AreaManagement.vue'
-import PersonManagement from '../views/PersonManagement.vue'
-import AppointmentManagement from '../views/AppointmentManagement.vue'
-import AreaStatistics from '../views/AreaStatistics.vue'
-import RechargeManagement from '../views/RechargeManagement.vue'
-import BalanceQuery from '../views/BalanceQuery.vue'
-import AuditLog from '../views/AuditLog.vue'
-import PivotAnalysis from '../views/PivotAnalysis.vue'
 
 const routes = [
   { path: '/', redirect: '/appointments' },
-  { path: '/appointments', component: AppointmentManagement },
-  { path: '/recharges', component: RechargeManagement },
-  { path: '/balance-query', component: BalanceQuery },
-  { path: '/areas', component: AreaManagement },
-  { path: '/persons', component: PersonManagement },
-  { path: '/area-statistics', component: AreaStatistics },
-  { path: '/audit-logs', component: AuditLog },
-  { path: '/pivot-analysis', component: PivotAnalysis }
+  { path: '/appointments', component: () => import('../views/AppointmentManagement.vue') },
+  { path: '/recharges', component: () => import('../views/RechargeManagement.vue') },
+  { path: '/balance-query', component: () => import('../views/BalanceQuery.vue') },
+  { path: '/areas', component: () => import('../views/AreaManagement.vue') },
+  { path: '/students', component: () => import('../views/StudentManagement.vue') },
+  { path: '/coaches', component: () => import('../views/CoachManagement.vue') },
+  { path: '/vehicles', component: () => import('../views/VehicleManagement.vue') },
+  { path: '/area-statistics', component: () => import('../views/AreaStatistics.vue') },
+  { path: '/audit-logs', component: () => import('../views/AuditLog.vue') },
+  { path: '/pivot-analysis', component: () => import('../views/PivotAnalysis.vue') }
 ]
 
 const router = createRouter({

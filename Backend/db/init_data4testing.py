@@ -11,11 +11,14 @@ def insert_test_data():
     cursor.execute('DELETE FROM balance_record')
     cursor.execute('DELETE FROM appointment')
     cursor.execute('DELETE FROM recharge')
-    cursor.execute('DELETE FROM person')
+    cursor.execute('DELETE FROM coach_vehicle')
+    cursor.execute('DELETE FROM vehicle')
+    cursor.execute('DELETE FROM student')
+    cursor.execute('DELETE FROM coach')
     cursor.execute('DELETE FROM area')
     
     # 重置自增ID
-    cursor.execute('DELETE FROM sqlite_sequence WHERE name IN ("balance_record", "appointment", "recharge", "person", "area")')
+    cursor.execute('DELETE FROM sqlite_sequence WHERE name IN ("balance_record", "appointment", "recharge", "coach_vehicle", "vehicle", "student", "coach", "area")')
     
     # 插入区域数据（郑州市各区）
     areas = [
@@ -44,8 +47,9 @@ def insert_test_data():
     
     import random
     
-    # 插入人员数据
-    persons = []
+    # 插入学员和教练数据
+    students = []
+    coaches = []
     
     # 添加10个学员
     for i in range(1, 11):
@@ -54,7 +58,7 @@ def insert_test_data():
         phone = f'13800138{str(i).zfill(3)}'
         register_time = f'2026-04-{str(i).zfill(2)}'
         area_id = (i % 12) + 1  # 分配到不同的区域
-        persons.append((name, phone, register_time, area_id, '学员'))
+        students.append((name, phone, register_time, area_id, i % 6))
     
     # 添加5个教练
     for i in range(1, 6):
@@ -63,9 +67,24 @@ def insert_test_data():
         phone = f'13900139{str(i).zfill(3)}'
         register_time = f'2026-04-{str(i).zfill(2)}'
         area_id = (i % 12) + 1  # 分配到不同的区域
-        persons.append((name, phone, register_time, area_id, '教练'))
+        coaches.append((name, phone, register_time, area_id))
     
-    cursor.executemany('INSERT OR IGNORE INTO person (name, phone, register_time, area_id, type) VALUES (?, ?, ?, ?, ?)', persons)
+    cursor.executemany('INSERT OR IGNORE INTO student (name, phone, register_time, area_id, driving_years) VALUES (?, ?, ?, ?, ?)', students)
+    cursor.executemany('INSERT OR IGNORE INTO coach (name, phone, register_time, area_id) VALUES (?, ?, ?, ?)', coaches)
+    
+    # 插入车辆数据
+    vehicles = [
+        ('SUV', '丰田', '汉兰达'),
+        ('SUV', '大众', '途观L'),
+        ('轿车', '大众', '朗逸'),
+        ('轿车', '本田', '雅阁'),
+        ('SUV', '本田', 'CR-V'),
+    ]
+    cursor.executemany('INSERT OR IGNORE INTO vehicle (vehicle_type, brand, model) VALUES (?, ?, ?)', vehicles)
+    
+    # 教练关联车辆：每个教练关联 1-2 辆车
+    coach_vehicles = [(1, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 1)]
+    cursor.executemany('INSERT OR IGNORE INTO coach_vehicle (coach_id, vehicle_id) VALUES (?, ?)', coach_vehicles)
     
     # 插入预约数据
     appointments = []
@@ -79,8 +98,8 @@ def insert_test_data():
     for i in range(1, 31):
         # 随机选择学员（1-10）
         student_id = (i % 10) + 1
-        # 随机选择教练（11-15）
-        coach_id = (i % 5) + 11
+        # 随机选择教练（1-5）
+        coach_id = (i % 5) + 1
         # 生成未来一周的日期
         days_from_now = i % 7  # 0-6天
         appointment_date = (today + datetime.timedelta(days=days_from_now)).strftime('%Y-%m-%d')
@@ -122,7 +141,7 @@ def insert_test_data():
     #     INSERT INTO balance_record (student_id, area_id, record_date, hours, type, recharge_id, appointment_id)
     #     SELECT r.student_id, p.area_id, SUBSTR(r.recharge_time, 1, 10), r.course_count, '充值', r.recharge_id, NULL
     #     FROM recharge r
-    #     JOIN person p ON r.student_id = p.person_id
+    #     JOIN student p ON r.student_id = p.student_id
     # ''')
     # 
     # # 将已完成的预约记录同步到余额记录表
@@ -130,7 +149,7 @@ def insert_test_data():
     #     INSERT INTO balance_record (student_id, area_id, record_date, hours, type, recharge_id, appointment_id)
     #     SELECT a.student_id, p.area_id, a.appointment_date, (a.end_time - a.start_time), '课时消耗', NULL, a.appointment_id
     #     FROM appointment a
-    #     JOIN person p ON a.student_id = p.person_id
+    #     JOIN student p ON a.student_id = p.student_id
     #     WHERE a.status = '已完成'
     # ''')
     

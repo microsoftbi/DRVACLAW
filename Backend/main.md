@@ -2,7 +2,7 @@
 
 ## 项目概述
 
-驾驶陪练小龙虾 API 是一个基于 FastAPI 构建的后端服务，提供了驾驶陪练系统的核心功能，包括区域管理、人员管理、预约管理、充值管理、余额记录和操作审计等功能。
+驾驶陪练小龙虾 API 是一个基于 FastAPI 构建的后端服务，提供了驾驶陪练系统的核心功能，包括区域管理、学员管理、教练管理、车辆管理、预约管理、充值管理、余额记录和操作审计等功能。
 
 接口BASE_URL: http://localhost:8002/
 
@@ -18,17 +18,28 @@
 | `/api/areas/{area_id}` | PUT | 更新区域 |
 | `/api/areas/{area_id}` | DELETE | 删除区域 |
 
-### 2. 人员管理
+### 2. 学员管理 / 教练管理 / 车辆管理
+
+学员（`/api/students`）与教练（`/api/coaches`）分别使用独立的表与ID，教练通过 `vehicle_ids` 关联多辆车。
 
 | 接口路径 | 方法 | 功能描述 |
 |---------|------|----------|
-| `/api/persons` | POST | 创建人员 |
-| `/api/persons` | GET | 获取所有人员 |
-| `/api/persons/students` | GET | 获取所有学员 |
-| `/api/persons/coaches` | GET | 获取所有教练 |
-| `/api/persons/{person_id}` | GET | 获取指定人员 |
-| `/api/persons/{person_id}` | PUT | 更新人员 |
-| `/api/persons/{person_id}` | DELETE | 删除人员 |
+| `/api/students` | POST | 创建学员 |
+| `/api/students` | GET | 获取所有学员 |
+| `/api/students/{student_id}` | GET | 获取指定学员 |
+| `/api/students/{student_id}` | PUT | 更新学员 |
+| `/api/students/{student_id}` | DELETE | 删除学员 |
+| `/api/coaches` | POST | 创建教练（可同时关联车辆） |
+| `/api/coaches` | GET | 获取所有教练（含关联车辆ID） |
+| `/api/coaches/{coach_id}` | GET | 获取指定教练 |
+| `/api/coaches/{coach_id}/vehicles` | GET | 获取教练关联的车辆列表 |
+| `/api/coaches/{coach_id}` | PUT | 更新教练（可重新设置关联车辆） |
+| `/api/coaches/{coach_id}` | DELETE | 删除教练 |
+| `/api/vehicles` | POST | 创建车辆 |
+| `/api/vehicles` | GET | 获取所有车辆 |
+| `/api/vehicles/{vehicle_id}` | GET | 获取指定车辆 |
+| `/api/vehicles/{vehicle_id}` | PUT | 更新车辆 |
+| `/api/vehicles/{vehicle_id}` | DELETE | 删除车辆 |
 
 ### 3. 预约管理
 
@@ -143,24 +154,26 @@
 - **输出参数**:
   - `message`: str (删除成功消息)
 
-### 2. 人员管理
+### 2. 学员管理 / 教练管理 / 车辆管理
 
-#### 创建人员
-- **路径**: `/api/persons`
+#### 创建学员
+- **路径**: `/api/students`
 - **方法**: POST
-- **功能**: 创建新的人员（学员或教练）
+- **功能**: 创建新的学员
 - **输入参数**:
   - `name`: str (姓名)
   - `phone`: str (手机号)
   - `area_id`: int (可选，所属区域ID)
-  - `type`: str (类型，值为"学员"或"教练")
+  - `driving_years`: int (可选，驾龄，单位年，默认0)
+  - `remark`: str (可选，备注)
 - **输出参数**:
-  - `person_id`: int (人员ID)
+  - `student_id`: int (学员ID)
   - `name`: str (姓名)
   - `phone`: str (手机号)
   - `register_time`: str (注册时间)
   - `area_id`: int (所属区域ID)
-  - `type`: str (类型)
+  - `driving_years`: int (驾龄)
+  - `remark`: str (备注)
 - **示例**:
   ```json
   // 输入
@@ -168,96 +181,158 @@
     "name": "张三",
     "phone": "13800138000",
     "area_id": 1,
-    "type": "学员"
+    "driving_years": 3,
+    "remark": "周末可练车"
   }
-  
+
   // 输出
   {
-    "person_id": 1,
+    "student_id": 1,
     "name": "张三",
     "phone": "13800138000",
     "register_time": "2026-04-13 10:00:00",
     "area_id": 1,
-    "type": "学员"
+    "driving_years": 3,
+    "remark": "周末可练车"
   }
   ```
 
-#### 获取所有人员
-- **路径**: `/api/persons`
-- **方法**: GET
-- **功能**: 获取所有人员列表
-- **输入参数**: 无
-- **输出参数**: 人员列表，每个人员包含:
-  - `person_id`: int (人员ID)
-  - `name`: str (姓名)
-  - `phone`: str (手机号)
-  - `register_time`: str (注册时间)
-  - `area_id`: int (所属区域ID)
-  - `type`: str (类型)
-
 #### 获取所有学员
-- **路径**: `/api/persons/students`
+- **路径**: `/api/students`
 - **方法**: GET
 - **功能**: 获取所有学员列表
-- **输入参数**: 无
-- **输出参数**: 学员列表，每个学员包含:
-  - `person_id`: int (人员ID)
-  - `name`: str (姓名)
-  - `phone`: str (手机号)
-  - `register_time`: str (注册时间)
-  - `area_id`: int (所属区域ID)
-  - `type`: str (类型)
+- **输出参数**: 学员列表，字段同上
 
-#### 获取所有教练
-- **路径**: `/api/persons/coaches`
+#### 获取指定学员
+- **路径**: `/api/students/{student_id}`
 - **方法**: GET
-- **功能**: 获取所有教练列表
-- **输入参数**: 无
-- **输出参数**: 教练列表，每个教练包含:
-  - `person_id`: int (人员ID)
-  - `name`: str (姓名)
-  - `phone`: str (手机号)
-  - `register_time`: str (注册时间)
-  - `area_id`: int (所属区域ID)
-  - `type`: str (类型)
+- **功能**: 获取指定ID的学员信息
 
-#### 获取指定人员
-- **路径**: `/api/persons/{person_id}`
-- **方法**: GET
-- **功能**: 获取指定ID的人员信息
-- **输入参数**:
-  - `person_id`: int (人员ID)
-- **输出参数**:
-  - `person_id`: int (人员ID)
-  - `name`: str (姓名)
-  - `phone`: str (手机号)
-  - `register_time`: str (注册时间)
-  - `area_id`: int (所属区域ID)
-  - `type`: str (类型)
-
-#### 更新人员
-- **路径**: `/api/persons/{person_id}`
+#### 更新学员
+- **路径**: `/api/students/{student_id}`
 - **方法**: PUT
-- **功能**: 更新指定ID的人员信息
+- **功能**: 更新指定ID的学员信息
 - **输入参数**:
-  - `person_id`: int (人员ID)
   - `name`: str (可选，姓名)
   - `phone`: str (可选，手机号)
   - `area_id`: int (可选，所属区域ID)
+  - `driving_years`: int (可选，驾龄)
+  - `remark`: str (可选，备注)
+
+#### 删除学员
+- **路径**: `/api/students/{student_id}`
+- **方法**: DELETE
+- **功能**: 删除指定ID的学员
 - **输出参数**:
-  - `person_id`: int (人员ID)
+  - `message`: str (删除成功消息)
+
+#### 创建教练
+- **路径**: `/api/coaches`
+- **方法**: POST
+- **功能**: 创建新的教练，可同时关联多辆车
+- **输入参数**:
+  - `name`: str (姓名)
+  - `phone`: str (手机号)
+  - `area_id`: int (可选，所属区域ID)
+  - `vehicle_ids`: int[] (可选，关联的车辆ID列表)
+- **输出参数**:
+  - `coach_id`: int (教练ID)
   - `name`: str (姓名)
   - `phone`: str (手机号)
   - `register_time`: str (注册时间)
   - `area_id`: int (所属区域ID)
-  - `type`: str (类型)
+  - `vehicle_ids`: int[] (关联的车辆ID列表)
+- **示例**:
+  ```json
+  // 输入
+  {
+    "name": "李教练",
+    "phone": "13900139000",
+    "area_id": 1,
+    "vehicle_ids": [1, 2]
+  }
 
-#### 删除人员
-- **路径**: `/api/persons/{person_id}`
-- **方法**: DELETE
-- **功能**: 删除指定ID的人员
+  // 输出
+  {
+    "coach_id": 1,
+    "name": "李教练",
+    "phone": "13900139000",
+    "register_time": "2026-04-13 10:00:00",
+    "area_id": 1,
+    "vehicle_ids": [1, 2]
+  }
+  ```
+
+#### 获取所有教练
+- **路径**: `/api/coaches`
+- **方法**: GET
+- **功能**: 获取所有教练列表，每个教练含 `vehicle_ids`
+
+#### 获取指定教练
+- **路径**: `/api/coaches/{coach_id}`
+- **方法**: GET
+- **功能**: 获取指定ID的教练信息
+
+#### 获取教练关联车辆
+- **路径**: `/api/coaches/{coach_id}/vehicles`
+- **方法**: GET
+- **功能**: 获取该教练关联的车辆列表（含 `vehicle_id`、`vehicle_type`、`brand`、`model`）
+
+#### 更新教练
+- **路径**: `/api/coaches/{coach_id}`
+- **方法**: PUT
+- **功能**: 更新指定ID的教练信息
 - **输入参数**:
-  - `person_id`: int (人员ID)
+  - `name`: str (可选，姓名)
+  - `phone`: str (可选，手机号)
+  - `area_id`: int (可选，所属区域ID)
+  - `vehicle_ids`: int[] (可选，重新设置关联车辆；不传则保持原关联)
+
+#### 删除教练
+- **路径**: `/api/coaches/{coach_id}`
+- **方法**: DELETE
+- **功能**: 删除指定ID的教练，同时解除其车辆关联
+- **输出参数**:
+  - `message`: str (删除成功消息)
+
+#### 创建车辆
+- **路径**: `/api/vehicles`
+- **方法**: POST
+- **功能**: 创建新的车辆
+- **输入参数**:
+  - `vehicle_type`: str (车型，值为"SUV"或"轿车")
+  - `brand`: str (品牌)
+  - `model`: str (型号)
+- **输出参数**:
+  - `vehicle_id`: int (车辆ID)
+  - `vehicle_type`: str (车型)
+  - `brand`: str (品牌)
+  - `model`: str (型号)
+  - `create_time`: str (创建时间)
+
+#### 获取所有车辆
+- **路径**: `/api/vehicles`
+- **方法**: GET
+- **功能**: 获取所有车辆列表
+
+#### 获取指定车辆
+- **路径**: `/api/vehicles/{vehicle_id}`
+- **方法**: GET
+- **功能**: 获取指定ID的车辆信息
+
+#### 更新车辆
+- **路径**: `/api/vehicles/{vehicle_id}`
+- **方法**: PUT
+- **功能**: 更新指定ID的车辆信息
+- **输入参数**:
+  - `vehicle_type`: str (可选，车型)
+  - `brand`: str (可选，品牌)
+  - `model`: str (可选，型号)
+
+#### 删除车辆
+- **路径**: `/api/vehicles/{vehicle_id}`
+- **方法**: DELETE
+- **功能**: 删除指定ID的车辆，同时解除教练对该车的关联
 - **输出参数**:
   - `message`: str (删除成功消息)
 

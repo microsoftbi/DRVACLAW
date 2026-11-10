@@ -1,10 +1,11 @@
-from fastapi import APIRouter, HTTPException
-from typing import List
-from datetime import datetime
+from fastapi import APIRouter, HTTPException, Query
+from typing import List, Optional
 from Backend.schemas.recharge import Recharge, RechargeCreate, RechargeUpdate
 from Backend.dao.recharge_dao import RechargeDAO
+from Backend.routers._errors import http_error
 
 router = APIRouter(prefix="/api/recharges", tags=["充值管理"])
+
 
 @router.post("", response_model=Recharge)
 def create_recharge(recharge: RechargeCreate):
@@ -17,21 +18,27 @@ def create_recharge(recharge: RechargeCreate):
         )
         return RechargeDAO.get_by_id(recharge_id)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise http_error(e)
+
 
 @router.get("", response_model=List[Recharge])
-def get_recharges():
+def get_recharges(page: Optional[int] = Query(None, ge=1),
+                  page_size: Optional[int] = Query(None, ge=1, le=200)):
     try:
-        return RechargeDAO.get_all()
+        limit = page_size
+        offset = ((page or 1) - 1) * page_size if page_size else 0
+        return RechargeDAO.get_all(limit=limit, offset=offset)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise http_error(e)
+
 
 @router.get("/student/{student_id}", response_model=List[Recharge])
 def get_recharges_by_student(student_id: int):
     try:
         return RechargeDAO.get_by_student_id(student_id)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise http_error(e)
+
 
 @router.get("/{recharge_id}", response_model=Recharge)
 def get_recharge(recharge_id: int):
@@ -41,7 +48,8 @@ def get_recharge(recharge_id: int):
             raise HTTPException(status_code=404, detail="充值记录不存在")
         return recharge
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise http_error(e)
+
 
 @router.put("/{recharge_id}", response_model=Recharge)
 def update_recharge(recharge_id: int, recharge: RechargeUpdate):
@@ -57,7 +65,8 @@ def update_recharge(recharge_id: int, recharge: RechargeUpdate):
             raise HTTPException(status_code=404, detail="充值记录不存在")
         return RechargeDAO.get_by_id(recharge_id)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise http_error(e)
+
 
 @router.delete("/{recharge_id}")
 def delete_recharge(recharge_id: int):
@@ -67,4 +76,4 @@ def delete_recharge(recharge_id: int):
             raise HTTPException(status_code=404, detail="充值记录不存在")
         return {"message": "删除成功"}
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise http_error(e)

@@ -1,78 +1,57 @@
-from typing import List, Dict
-from Backend.db.connection import get_connection
+from typing import List, Dict, Optional
+import datetime
+from Backend.db.connection import connection
 
 class AuditLogDAO:
     @staticmethod
-    def create(operator: str, operation_type: str, operation_result: str, student_id: int = None, coach_id: int = None) -> int:
-        try:
-            conn = get_connection()
-            cursor = conn.cursor()
-            
-            import datetime
-            operation_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            
-            # 打印调试信息
-            print(f"Creating audit log: operator={operator}, operation_type={operation_type}, operation_result={operation_result}, student_id={student_id}, coach_id={coach_id}, operation_time={operation_time}")
-            
-            cursor.execute(
-                'INSERT INTO audit_log (operator, student_id, coach_id, operation_time, operation_type, operation_result) VALUES (?, ?, ?, ?, ?, ?)',
-                (operator, student_id, coach_id, operation_time, operation_type, operation_result)
-            )
-            
-            audit_id = cursor.lastrowid
-            conn.commit()
-            conn.close()
-            print(f"Audit log created successfully with id: {audit_id}")
-            return audit_id
-        except Exception as e:
-            print(f"Error creating audit log: {e}")
-            raise e
-    
+    def create(operator: str, operation_type: str, operation_result: str,
+               student_id: int = None, coach_id: int = None, conn=None) -> int:
+        """写入审计日志。
+
+        传入 conn 时复用调用方事务，保证业务写入与审计记录同成功/同回滚；
+        不传时自建连接并提交。
+        """
+        operation_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        sql = ('INSERT INTO audit_log (operator, student_id, coach_id, operation_time, operation_type, operation_result) '
+               'VALUES (?, ?, ?, ?, ?, ?)')
+        params = (operator, student_id, coach_id, operation_time, operation_type, operation_result)
+
+        if conn is not None:
+            return conn.execute(sql, params).lastrowid
+
+        with connection() as own_conn:
+            own_conn.execute('BEGIN IMMEDIATE')
+            try:
+                audit_id = own_conn.execute(sql, params).lastrowid
+                own_conn.execute('COMMIT')
+                return audit_id
+            except Exception:
+                own_conn.execute('ROLLBACK')
+                raise
+
     @staticmethod
-    def get_all() -> List[Dict]:
-        try:
-            conn = get_connection()
-            cursor = conn.cursor()
-            cursor.execute('SELECT * FROM audit_log ORDER BY audit_id DESC')
-            rows = cursor.fetchall()
-            print(f"Found {len(rows)} audit logs")
-            # 获取列名
-            if cursor.description:
-                columns = [col[0] for col in cursor.description]
-                print(f"Columns: {columns}")
-                # 将元组转换为字典
-                result = [dict(zip(columns, row)) for row in rows]
-                print(f"Result: {result}")
-                conn.close()
-                return result
-            else:
-                print("No columns found")
-                conn.close()
-                return []
-        except Exception as e:
-            print(f"Error getting all audit logs: {e}")
-            return []
-    
+    def get_all(limit: Optional[int] = None, offset: int = 0) -> List[Dict]:
+        sql = 'SELECT * FROM audit_log ORDER BY audit_id DESC'
+        params: list = []
+        if limit is not None:
+            sql += ' LIMIT ? OFFSET ?'
+            params = [limit, offset]
+        with connection() as conn:
+            rows = conn.execute(sql, params).fetchall()
+            return [dict(row) for row in rows]
+
     @staticmethod
     def get_by_student_id(student_id: int) -> List[Dict]:
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM audit_log WHERE student_id = ? ORDER BY audit_id DESC', (student_id,))
-        rows = cursor.fetchall()
-        # 获取列名
-        columns = [col[0] for col in cursor.description]
-        conn.close()
-        # 将元组转换为字典
-        return [dict(zip(columns, row)) for row in rows]
-    
+        with connection() as conn:
+            rows = conn.execute(
+                'SELECT * FROM audit_log WHERE student_id = ? ORDER BY audit_id DESC', (student_id,)
+            ).fetchall()
+            return [dict(row) for row in rows]
+
     @staticmethod
     def get_by_coach_id(coach_id: int) -> List[Dict]:
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM audit_log WHERE coach_id = ? ORDER BY audit_id DESC', (coach_id,))
-        rows = cursor.fetchall()
-        # 获取列名
-        columns = [col[0] for col in cursor.description]
-        conn.close()
-        # 将元组转换为字典
-        return [dict(zip(columns, row)) for row in rows]
+        with connection() as conn:
+            rows = conn.execute(
+                'SELECT * FROM audit_log WHERE coach_id = ? ORDER BY audit_id DESC', (coach_id,)
+            ).fetchall()
+            return [dict(row) for row in rows]

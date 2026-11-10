@@ -71,8 +71,10 @@ description: "驾驶陪练系统AI助手。根据系统接口文档和用户问�
 ### 3. 余额记录
 - **查询余额**：GET `/api/balance-records/student/{student_id}`
 
-### 4. 人员管理
-- **查询学员**：GET `/api/persons/students`
+### 4. 学员 / 教练 / 车辆管理
+- **查询学员**：GET `/api/students`
+- **查询教练**：GET `/api/coaches`
+- **查询车辆**：GET `/api/vehicles`
 
 ## 示例用法
 

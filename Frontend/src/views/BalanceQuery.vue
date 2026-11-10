@@ -6,10 +6,10 @@
     <div style="margin-bottom: 20px;">
       <el-select v-model="selectedStudentId" placeholder="请选择学员" style="width: 300px;" filterable>
         <el-option
-          v-for="student in students.filter(s => s.type === '学员')"
-          :key="student.person_id"
+          v-for="student in students"
+          :key="student.student_id"
           :label="`${student.name} - ${getAreaName(student.area_id)} - ${student.phone}`"
-          :value="student.person_id"
+          :value="student.student_id"
         />
       </el-select>
     </div>
@@ -114,13 +114,16 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import balanceApi from '../api/balance'
-import personApi from '../api/person'
+import studentApi from '../api/student'
+import coachApi from '../api/coach'
 import areaApi from '../api/area'
 import rechargeApi from '../api/recharge'
 import appointmentApi from '../api/appointment'
+import { createStudentNameGetter } from '../composables/useStudentName'
 
 const records = ref([])
 const students = ref([])
+const coaches = ref([])
 const areas = ref([])
 const selectedStudentId = ref('')
 
@@ -142,11 +145,16 @@ const loadRecords = async () => {
 
 const loadStudents = async () => {
   try {
-    const response = await personApi.getAll()
-    students.value = response || [] // 包含所有人员（学员和教练）
+    const [studentList, coachList] = await Promise.all([
+      studentApi.getAll(),
+      coachApi.getAll()
+    ])
+    students.value = studentList || []
+    coaches.value = coachList || []
   } catch (error) {
     ElMessage.error('获取人员列表失败')
     students.value = []
+    coaches.value = []
   }
 }
 
@@ -160,11 +168,7 @@ const loadAreas = async () => {
   }
 }
 
-const getStudentName = (studentId) => {
-  if (!students.value) return '未知学员'
-  const student = students.value.find(s => s.person_id === studentId && s.type === '学员')
-  return student ? student.name : '未知学员'
-}
+const getStudentName = createStudentNameGetter(students)
 
 const getAreaName = (areaId) => {
   if (!areas.value) return '未知区域'
@@ -173,8 +177,8 @@ const getAreaName = (areaId) => {
 }
 
 const getCoachName = (coachId) => {
-  if (!students.value) return '未知教练'
-  const coach = students.value.find(s => s.person_id === coachId && s.type === '教练')
+  if (!coaches.value) return '未知教练'
+  const coach = coaches.value.find(c => c.coach_id === coachId)
   return coach ? coach.name : '未知教练'
 }
 

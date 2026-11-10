@@ -186,7 +186,8 @@
 import { ref, onMounted, computed } from 'vue'
 import { DataLine, Grid, Close, Download } from '@element-plus/icons-vue'
 import { appointmentApi } from '../api/appointment'
-import { personApi } from '../api/person'
+import { studentApi } from '../api/student'
+import { coachApi } from '../api/coach'
 import * as XLSX from 'xlsx'
 import { saveAs } from 'file-saver'
 
@@ -210,7 +211,8 @@ const tableData = ref([])
 const tableColumns = ref([])
 const loading = ref(false)
 const appointments = ref([])
-const persons = ref([])
+const students = ref([])
+const coaches = ref([])
 const enrichedAppointmentsCache = ref([])
 
 const draggedItem = ref(null)
@@ -293,9 +295,10 @@ const clearAll = () => {
 
 const loadData = async () => {
   try {
-    [appointments.value, persons.value] = await Promise.all([
+    [appointments.value, students.value, coaches.value] = await Promise.all([
       appointmentApi.getAll(),
-      personApi.getAll()
+      studentApi.getAll(),
+      coachApi.getAll()
     ])
     prepareEnrichedAppointments()
   } catch (error) {
@@ -305,8 +308,8 @@ const loadData = async () => {
 
 const prepareEnrichedAppointments = () => {
   enrichedAppointmentsCache.value = appointments.value.map(apt => {
-    const student = persons.value.find(p => p.person_id === apt.student_id)
-    const coach = persons.value.find(p => p.person_id === apt.coach_id)
+    const student = students.value.find(s => s.student_id === apt.student_id)
+    const coach = coaches.value.find(c => c.coach_id === apt.coach_id)
     
     const startTime = typeof apt.start_time === 'number' ? apt.start_time : parseInt(apt.start_time)
     const endTime = typeof apt.end_time === 'number' ? apt.end_time : parseInt(apt.end_time)

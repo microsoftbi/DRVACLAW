@@ -38,9 +38,10 @@
         <h3>郑州各区地图</h3>
         <div id="areaMap" class="map-container"></div>
       </div>
-      <div class="stats-section">
+      <div class="stats-section" v-loading="loading">
         <h3>区域统计数据</h3>
-        <div class="area-details">
+        <el-empty v-if="!areas.length" description="暂无区域数据" />
+        <div class="area-details" v-else>
           <div class="stats-card">
             <h4>{{ selectedArea ? selectedArea.name + '区统计' : '郑州全市统计' }}</h4>
             <div class="stats-grid">
@@ -73,10 +74,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import * as echarts from 'echarts'
 import { areaApi } from '../api/area'
-import { personApi } from '../api/person'
+import { studentApi } from '../api/student'
+import { coachApi } from '../api/coach'
 import { appointmentApi } from '../api/appointment'
 import rechargeApi from '../api/recharge'
 
@@ -93,6 +95,7 @@ const selectedAreaStats = ref({
 
 const mapChart = ref(null)
 const statusChart = ref(null)
+const loading = ref(false)
 
 // 加载区域数据
 const loadAreas = async () => {
@@ -100,7 +103,7 @@ const loadAreas = async () => {
     areas.value = await areaApi.getAll()
     initMap()
   } catch (error) {
-    console.error('加载区域数据失败:', error)
+    areas.value = []
   }
 }
 
@@ -171,9 +174,13 @@ const initMap = () => {
 
 // 加载区域统计数据
 const loadAreaStats = async (areaId = null, startDate = null, endDate = null) => {
+  loading.value = true
   try {
-    // 加载人员数据
-    const persons = await personApi.getAll()
+    // 加载学员与教练数据
+    const [students, coaches] = await Promise.all([
+      studentApi.getAll(),
+      coachApi.getAll()
+    ])
     // 加载预约数据
     const appointments = await appointmentApi.getAll()
     // 加载充值数据
@@ -198,18 +205,18 @@ const loadAreaStats = async (areaId = null, startDate = null, endDate = null) =>
     
     // 统计学员人数
     const studentCount = areaId 
-      ? persons.filter(p => p.type === '学员' && p.area_id === areaId && isDateInRange(p.register_time, startDate, endDate)).length
-      : persons.filter(p => p.type === '学员' && isDateInRange(p.register_time, startDate, endDate)).length
+      ? students.filter(s => s.area_id === areaId && isDateInRange(s.register_time, startDate, endDate)).length
+      : students.filter(s => isDateInRange(s.register_time, startDate, endDate)).length
     
     // 统计教练人数
     const coachCount = areaId 
-      ? persons.filter(p => p.type === '教练' && p.area_id === areaId && isDateInRange(p.register_time, startDate, endDate)).length
-      : persons.filter(p => p.type === '教练' && isDateInRange(p.register_time, startDate, endDate)).length
+      ? coaches.filter(c => c.area_id === areaId && isDateInRange(c.register_time, startDate, endDate)).length
+      : coaches.filter(c => isDateInRange(c.register_time, startDate, endDate)).length
     
     // 统计预约课程数
     const appointmentCount = areaId 
       ? appointments.filter(a => {
-          const student = persons.find(p => p.person_id === a.student_id)
+          const student = students.find(s => s.student_id === a.student_id)
           return student && student.area_id === areaId && isDateInRange(a.appointment_date, startDate, endDate)
         }).length
       : appointments.filter(a => isDateInRange(a.appointment_date, startDate, endDate)).length
@@ -217,7 +224,7 @@ const loadAreaStats = async (areaId = null, startDate = null, endDate = null) =>
     // 统计充值总计
     const rechargeTotal = areaId 
       ? recharges.reduce((total, recharge) => {
-          const student = persons.find(p => p.person_id === recharge.student_id)
+          const student = students.find(s => s.student_id === recharge.student_id)
           if (student && student.area_id === areaId && isDateInRange(recharge.recharge_time, startDate, endDate)) {
             return total + recharge.amount
           }
@@ -241,7 +248,7 @@ const loadAreaStats = async (areaId = null, startDate = null, endDate = null) =>
     appointments.forEach(a => {
       if (isDateInRange(a.appointment_date, startDate, endDate)) {
         if (areaId) {
-          const student = persons.find(p => p.person_id === a.student_id)
+          const student = students.find(s => s.student_id === a.student_id)
           if (student && student.area_id === areaId) {
             statusCounts[a.status] = (statusCounts[a.status] || 0) + 1
           }
@@ -262,7 +269,15 @@ const loadAreaStats = async (areaId = null, startDate = null, endDate = null) =>
     // 更新状态分布图表
     updateStatusChart()
   } catch (error) {
-    console.error('加载区域统计数据失败:', error)
+    selectedAreaStats.value = {
+      studentCount: 0,
+      coachCount: 0,
+      appointmentCount: 0,
+      rechargeTotal: 0,
+      statusCounts: {}
+    }
+  } finally {
+    loading.value = false
   }
 }
 
@@ -336,6 +351,18 @@ onMounted(() => {
   loadAreas()
   loadAreaStats() // 加载默认的全郑州统计数据
   window.addEventListener('resize', handleResize)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
+  if (mapChart.value) {
+    mapChart.value.dispose()
+    mapChart.value = null
+  }
+  if (statusChart.value) {
+    statusChart.value.dispose()
+    statusChart.value = null
+  }
 })
 </script>
 

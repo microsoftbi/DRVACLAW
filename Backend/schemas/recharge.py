@@ -10,11 +10,14 @@ class RechargeBase(BaseModel):
 class RechargeCreate(RechargeBase):
     pass
 
-class RechargeUpdate(RechargeBase):
-    pass
+class RechargeUpdate(BaseModel):
+    student_id: Optional[int] = None
+    amount: Optional[float] = Field(None, gt=0)
+    course_count: Optional[int] = Field(None, gt=0)
+    recharge_time: Optional[str] = None
 
 class Recharge(RechargeBase):
     recharge_id: int
-    
+
     class Config:
         from_attributes = True

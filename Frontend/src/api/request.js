@@ -1,16 +1,14 @@
 import axios from 'axios'
 
+// 默认走同源相对路径，由 Vite 代理转发到后端；可通过 VITE_API_BASE 覆盖部署地址
 const service = axios.create({
-  baseURL: 'http://192.168.0.107:8002',
+  baseURL: import.meta.env.VITE_API_BASE || '',
   timeout: 10000
 })
 
 service.interceptors.response.use(
   response => response.data,
-  error => {
-    console.error('API Error:', error)
-    return Promise.reject(error)
-  }
+  error => Promise.reject(error)
 )
 
 export default service

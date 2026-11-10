@@ -6,7 +6,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from Backend.db.init_db import init_db
 from Backend.dao.area_dao import AreaDAO
-from Backend.dao.person_dao import PersonDAO
+from Backend.dao.student_dao import StudentDAO
+from Backend.dao.coach_dao import CoachDAO
 from Backend.dao.appointment_dao import AppointmentDAO
 from datetime import datetime
 
@@ -35,47 +36,48 @@ def seed_areas():
         except Exception as e:
             print(f"  ✗ 添加失败: {area_name} - {e}")
 
-def seed_persons():
-    """添加测试人员数据"""
+def seed_students_and_coaches():
+    """添加测试学员和教练数据"""
     print("\n正在添加测试人员数据...")
     
     students = [
-        {"name": "张明", "phone": "13800138001", "type": "学员", "area_id": 1},
-        {"name": "李华", "phone": "13800138002", "type": "学员", "area_id": 2},
-        {"name": "王芳", "phone": "13800138003", "type": "学员", "area_id": 3},
+        {"name": "张明", "phone": "13800138001", "area_id": 1, "driving_years": 2},
+        {"name": "李华", "phone": "13800138002", "area_id": 2, "driving_years": 5},
+        {"name": "王芳", "phone": "13800138003", "area_id": 3, "driving_years": 1},
     ]
     
     coaches = [
-        {"name": "赵教练", "phone": "13900139001", "type": "教练", "area_id": 1},
-        {"name": "钱教练", "phone": "13900139002", "type": "教练", "area_id": 2},
-        {"name": "孙教练", "phone": "13900139003", "type": "教练", "area_id": 3},
+        {"name": "赵教练", "phone": "13900139001", "area_id": 1},
+        {"name": "钱教练", "phone": "13900139002", "area_id": 2},
+        {"name": "孙教练", "phone": "13900139003", "area_id": 3},
     ]
     
     register_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
     for student in students:
         try:
-            person_id = PersonDAO.create(
+            student_id = StudentDAO.create(
                 student["name"],
                 student["phone"],
                 register_time,
                 student["area_id"],
-                student["type"]
+                student["driving_years"],
+                None
             )
-            print(f"  ✓ 已添加学员: {student['name']} (ID: {person_id})")
+            print(f"  ✓ 已添加学员: {student['name']} (ID: {student_id})")
         except Exception as e:
             print(f"  ✗ 添加失败: {student['name']} - {e}")
     
     for coach in coaches:
         try:
-            person_id = PersonDAO.create(
+            coach_id = CoachDAO.create(
                 coach["name"],
                 coach["phone"],
                 register_time,
                 coach["area_id"],
-                coach["type"]
+                []
             )
-            print(f"  ✓ 已添加教练: {coach['name']} (ID: {person_id})")
+            print(f"  ✓ 已添加教练: {coach['name']} (ID: {coach_id})")
         except Exception as e:
             print(f"  ✗ 添加失败: {coach['name']} - {e}")
 
@@ -115,7 +117,7 @@ def main():
     
     # 添加测试数据
     seed_areas()
-    seed_persons()
+    seed_students_and_coaches()
     seed_appointments()
     
     print("\n" + "=" * 50)
