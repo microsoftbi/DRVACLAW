@@ -279,21 +279,32 @@ async function main() {
       process.exit(0)
     }
     try {
+      const plain = !!task.plain
       // 原始接口响应页内容很短，用紧凑高度避免截图大片空白
       const rawApi = task.url.startsWith('http://127.0.0.1:8002') && !task.url.includes('/docs')
       await cdp.send('Emulation.setDeviceMetricsOverride', {
         width: VIEW_WIDTH,
-        height: rawApi ? 420 : VIEW_HEIGHT,
+        height: task.height || (rawApi && !plain ? 420 : VIEW_HEIGHT),
         deviceScaleFactor: 1,
         mobile: false
       })
       await cdp.send('Page.navigate', { url: task.url })
-      await waitReadyAndFocus(cdp, task.focus)
-      await cdp.send('Runtime.evaluate', {
-        expression: injectExpression(task),
-        returnByValue: true
-      })
-      await sleep(200)
+      await waitReadyAndFocus(cdp, plain ? '' : task.focus)
+      if (!plain) {
+        await cdp.send('Runtime.evaluate', {
+          expression: injectExpression(task),
+          returnByValue: true
+        })
+      }
+      if (task.script) {
+        await cdp.send('Runtime.evaluate', {
+          expression: task.script,
+          awaitPromise: true,
+          returnByValue: true
+        })
+        await sleep(700)
+      }
+      await sleep(plain ? 500 : 200)
 
       const shot = await cdp.send('Page.captureScreenshot', {
         format: 'jpeg',
