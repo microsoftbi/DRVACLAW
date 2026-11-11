@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+deepagents
+langgraph-checkpoint-sqlite
+langchain-openai
+requests

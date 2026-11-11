@@ -1,4 +1,4 @@
-# 驾驶陪练小龙虾
+# 驾驶智陪工作台
 
 ## 简介
 这个是我 Vibe Coding 练手的一个项目。
@@ -7,7 +7,7 @@
 于是我根据他们业务比较浅显的理解，简单搭建了这个系统。
 
 ## 功能
-驾驶陪练管理系统，面向刚拿到驾驶证还不敢上路，以及长时间没开车需要重新熟悉驾驶的司机。
+驾驶智陪工作台，面向刚拿到驾驶证还不敢上路，以及长时间没开车需要重新熟悉驾驶的司机。
 学员联系平台管理员，说明地点和时间，然后由管理员指派教练。
 系统只有一个管理员角色，学员、教练和车辆的信息都靠管理员来维护。
 系统支持对接小龙虾，用户可以在微信里下各种指令来操作系统，这个项目的技术尝试主要是为了这个。
@@ -24,6 +24,8 @@
 - **区域统计**：按日期范围统计各区域的预约量与完成情况。
 - **操作审计**：记录预约、充值等关键操作，可按学员/教练追溯。
 - **透视分析**：拖拽维度与度量值生成透视表，支持导出 Excel。
+- **AI 助理**：常驻界面右下角的对话助手，用自然语言查询学员、余额、预约与统计；新增、修改、删除等写操作先弹出确认卡，批准后才写入系统。
+- **设置**：配置大模型 Base URL、API Key 与模型 / Endpoint ID，并可随时启用或停用 AI 助理。
 
 ## 界面预览
 
@@ -39,6 +41,18 @@
 
 ![透视分析](docs/images/pivot-analysis.jpg)
 
+**AI 助理**：右下角常驻对话面板，可收成气泡；提问即可查询业务数据，写操作先给出确认卡。
+
+![AI 助理对话](docs/images/ai-assistant-chat.jpg)
+
+**AI 助理审批**：新增、修改、删除等动作会列出即将执行的内容，点「确认执行」才真正落库。
+
+![AI 助理操作确认](docs/images/ai-assistant-approval.jpg)
+
+**设置**：填写大模型 Base URL、API Key 与模型 / Endpoint ID，并可一键停用 AI 助理。
+
+![设置页](docs/images/ai-settings.jpg)
+
 更多页面与逐项操作说明见 [USERGUIDE.md](USERGUIDE.md)。
 
 ## Vibe Coding平台
@@ -52,8 +66,10 @@
 - FastAPI（Python 3.11，后端）
 - DAO（手写 SQL，没有使用 SQLAlchemy）
 - SQLite
+- deepagents + LangGraph + LangChain（AI 助理服务，独立进程、端口 8003）
+- 豆包 / 火山方舟 Ark（大模型服务，OpenAI 兼容接口）
 
-前后端通过 Vite 代理对接：前端 `/api/*` 请求转发到后端 `http://localhost:8002`，无需在前端硬编码后端地址。
+前后端通过 Vite 代理对接：前端 `/api/*` 请求转发到后端 `http://localhost:8002`，`/agent-api/*` 转发到 AI 助理服务 `http://localhost:8003`，无需在前端硬编码地址。
 
 ## 目录结构
 
@@ -66,9 +82,15 @@ DRVACLAW/
 │   └── db/             建库建表、迁移与测试数据脚本
 ├── Frontend/           Vue3 管理端
 │   └── src/
-│       ├── api/        接口封装（统一走 /api）
-│       ├── views/      各业务页面
+│       ├── api/        接口封装（统一走 /api，AI 走 /agent-api）
+│       ├── views/      各业务页面（含设置页 Settings.vue）
+│       ├── components/ 公共组件（AIAssistant.vue 常驻聊天框）
 │       └── composables/ 公共逻辑
+├── Agent/              AI 助理服务（FastAPI + deepagents，端口 8003）
+│   ├── server.py       SSE 流式对话、会话持久化、配置与审批接口
+│   ├── agent_factory.py deepagents 图构建与 SKILLS 技能装载
+│   ├── tools.py        29 个业务工具（查询 10 + 写操作 19）
+│   └── config.py       模型配置读写（Agent/data/config.json）
 ├── TEST/UAT/           验收测试套件、报告与逐用例截图
 ├── docs/images/        README 与用户手册使用的界面截图
 ├── SKILLS/             对接小龙虾的 Skill
@@ -83,7 +105,9 @@ DRVACLAW/
 ```bash
 ./start.sh
 ```
-后端运行在 `http://localhost:8002`，前端运行在 `http://localhost:5173`（端口被占用时 Vite 会自动顺延，以终端输出为准）。停止服务执行 `./stop.sh`。
+后端运行在 `http://localhost:8002`，AI 助理服务运行在 `http://localhost:8003`，前端固定在 `http://localhost:5174`。停止服务执行 `./stop.sh`。
+
+首次使用 AI 助理前，打开左侧「设置」，填写大模型 Base URL、API Key 与模型 / Endpoint ID，点「保存配置」并按「测试连接」确认连通；不想使用时关闭「启用 AI 助手」即可隐藏聊天框。
 
 ### 手动启动
 ```bash
@@ -95,7 +119,13 @@ python3 -m uvicorn main:app --host 0.0.0.0 --port 8002 --reload
 cd Frontend
 npm install
 npm run dev
+
+# AI 助理（使用项目内独立 Python 3.11 运行时）
+cd Agent
+.venv/bin/python -m uvicorn server:app --host 0.0.0.0 --port 8003
 ```
+
+AI 助理依赖见 `Agent/requirements.txt`，运行时与环境位于 `Agent/runtime`、`Agent/.venv`（均不纳入版本控制）。
 
 首次使用需初始化数据库：
 ```bash
@@ -146,6 +176,7 @@ https://b23.tv/qwDWH6K
 
 
 ## 更新日志
+- 2026-11-11：新增常驻 AI 助理（deepagents 会话、SKILLS 技能装载、29 个业务工具、写操作人工审批、SSE 流式输出），以及设置页（大模型 Base URL / API Key 配置、AI 助手启停、聊天框最大化与恢复）。
 - 2026-11-11：完成 P0–P2 质量整改并补充 UAT 验收测试（62 条用例全部通过，报告附逐用例截图）。
 - 2026-04-17：添加数据透视分析功能。
 - 2026-04-13：测试把接口直接暴露给大模型，让大模型自己去判断用哪个接口。

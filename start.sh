@@ -15,6 +15,7 @@ echo "项目根目录: $PROJECT_ROOT"
 echo ""
 echo "正在清理旧进程..."
 pkill -f "uvicorn.*main:app" 2>/dev/null || true
+pkill -f "uvicorn.*server:app" 2>/dev/null || true
 pkill -f "vite.*--host" 2>/dev/null || true
 sleep 1
 
@@ -35,6 +36,20 @@ echo "后端日志: $PROJECT_ROOT/backend.log"
 echo ""
 echo "等待后端服务启动..."
 sleep 3
+
+# 启动 AI 助理服务
+echo ""
+echo "启动 AI 助理服务..."
+cd "$PROJECT_ROOT/Agent"
+if [ ! -x ".venv/bin/python" ]; then
+    echo "未找到 Agent 运行环境，请先执行 Agent 安装步骤"
+else
+    nohup .venv/bin/python -m uvicorn server:app --host 0.0.0.0 --port 8003 > "$PROJECT_ROOT/agent.log" 2>&1 &
+    AGENT_PID=$!
+    echo "AI 助理服务已启动 (PID: $AGENT_PID, 端口: 8003)"
+    echo "AI 助理日志: $PROJECT_ROOT/agent.log"
+    echo $AGENT_PID > "$PROJECT_ROOT/agent.pid"
+fi
 
 # 启动前端服务
 echo ""
@@ -58,9 +73,11 @@ echo "   系统启动完成！"
 echo "=========================================="
 echo ""
 echo "后端API地址: http://localhost:8002"
-echo "前端地址: http://localhost:5173"
+echo "AI 助理地址: http://localhost:8003"
+echo "前端地址: http://localhost:5174"
 echo ""
 echo "查看后端日志: tail -f $PROJECT_ROOT/backend.log"
+echo "查看 AI 助理日志: tail -f $PROJECT_ROOT/agent.log"
 echo "查看前端日志: tail -f $PROJECT_ROOT/frontend.log"
 echo ""
 echo "停止服务: ./stop.sh"

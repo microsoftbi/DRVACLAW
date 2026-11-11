@@ -68,22 +68,41 @@
               <span>透视分析</span>
             </el-menu-item>
           </el-menu-item-group>
+
+          <el-menu-item-group>
+            <template #title>系统</template>
+            <el-menu-item index="/settings">
+              <el-icon><Setting /></el-icon>
+              <span>设置</span>
+            </el-menu-item>
+          </el-menu-item-group>
         </el-menu>
       </el-aside>
       <el-main class="app-main">
         <router-view />
       </el-main>
     </el-container>
+    <AIAssistant v-if="agentEnabled" />
   </el-container>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
-import { Location, User, Calendar, DataAnalysis, Money, View } from '@element-plus/icons-vue'
+import { Location, User, Calendar, DataAnalysis, Money, View, Setting } from '@element-plus/icons-vue'
+import AIAssistant from './components/AIAssistant.vue'
 
+const AGENT_SWITCH_KEY = 'drvaclaws_agent_enabled'
 const route = useRoute()
 const activeMenu = computed(() => route.path)
+const agentEnabled = ref(localStorage.getItem(AGENT_SWITCH_KEY) !== 'false')
+
+const syncAgentEnabled = () => {
+  agentEnabled.value = localStorage.getItem(AGENT_SWITCH_KEY) !== 'false'
+}
+
+onMounted(() => window.addEventListener('drvaclaws-agent-switch', syncAgentEnabled))
+onBeforeUnmount(() => window.removeEventListener('drvaclaws-agent-switch', syncAgentEnabled))
 </script>
 
 <style>

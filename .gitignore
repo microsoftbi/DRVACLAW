@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+
+# Agent 独立运行时与本地数据
+Agent/.venv/
+Agent/runtime/
+Agent/data/
+agent.log
+agent.pid
+
+# 前端
+Frontend/node_modules/
+Frontend/dist/
+
+# 日志与进程
+backend.log
+backend.pid
+frontend.log
+frontend.pid
+
+# 桌面启动器编译产物
+DesktopApp/build/
+
+# 系统
+.DS_Store

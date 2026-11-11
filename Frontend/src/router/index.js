@@ -11,7 +11,8 @@ const routes = [
   { path: '/vehicles', component: () => import('../views/VehicleManagement.vue') },
   { path: '/area-statistics', component: () => import('../views/AreaStatistics.vue') },
   { path: '/audit-logs', component: () => import('../views/AuditLog.vue') },
-  { path: '/pivot-analysis', component: () => import('../views/PivotAnalysis.vue') }
+  { path: '/pivot-analysis', component: () => import('../views/PivotAnalysis.vue') },
+  { path: '/settings', component: () => import('../views/Settings.vue') }
 ]
 
 const router = createRouter({

@@ -29,8 +29,19 @@ if [ -f "$PROJECT_ROOT/frontend.pid" ]; then
     rm -f "$PROJECT_ROOT/frontend.pid"
 fi
 
+# 停止 AI 助理服务
+if [ -f "$PROJECT_ROOT/agent.pid" ]; then
+    AGENT_PID=$(cat "$PROJECT_ROOT/agent.pid" 2>/dev/null)
+    if [ -n "$AGENT_PID" ] && kill -0 $AGENT_PID 2>/dev/null; then
+        kill $AGENT_PID 2>/dev/null
+        echo "AI 助理服务已停止 (PID: $AGENT_PID)"
+    fi
+    rm -f "$PROJECT_ROOT/agent.pid"
+fi
+
 # 额外清理可能残留的进程
 pkill -f "uvicorn.*main:app" 2>/dev/null || true
+pkill -f "uvicorn.*server:app" 2>/dev/null || true
 pkill -f "vite.*--host" 2>/dev/null || true
 
 # 清理日志文件（可选，保留以便查看）
